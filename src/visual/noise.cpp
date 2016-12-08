@@ -28,12 +28,14 @@ UniformNoise::~UniformNoise()
 
 void UniformNoise::permute()
 {
-  Material::permute();
   noise_params_t* p = (noise_params_t*)parameters;
 
   // enforce range constraints
   for(int i = 3; i--;)
   {
+    p->v[i].min = randomf();
+    p->v[i].max = randomf();
+
     if(p->v[i].min > p->v[i].max)
     {
       float temp = p->v[i].min;
@@ -41,6 +43,8 @@ void UniformNoise::permute()
       p->v[i].max = temp;
     }
   }
+
+  Material::permute();
 }
 
 void UniformNoise::sample_at(unsigned int x, unsigned int y, void* textel)

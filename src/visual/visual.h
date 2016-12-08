@@ -5,5 +5,6 @@
 #include "mesh.h"
 #include "material.hpp"
 #include "viewer.hpp"
+#include <png.h>
 
 #endif

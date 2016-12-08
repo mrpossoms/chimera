@@ -12,7 +12,7 @@ union rgb_t {
 
 class Material : public Percept {
 public:
-  Material(unsigned int width, unsigned int height);
+  Material(int width, int height);
   ~Material();
 
   unsigned int get_width();
@@ -21,10 +21,8 @@ public:
   // must be implemented by user to generate texture data
   virtual void sample_at(unsigned int x, unsigned int y, void* textel) = 0;
 
-  // rendering api dependent
-  void use(int id);
-
   void permute();
+  void render();
 
 protected:
   void*  tag; // implementation dependent

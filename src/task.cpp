@@ -30,6 +30,8 @@ again:
       // then we will keep it
       current.tag_distribution[tag]++;
       current.samples++;
+
+      scene->render();
       assert(scene->save(target.data_path) == CHIMERA_OK);
     }
     else

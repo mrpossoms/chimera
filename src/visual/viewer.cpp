@@ -1,6 +1,6 @@
 #include "viewer.hpp"
 
-Viewer::Viewer(int width, int height, float fov=VIEWER_90_DEG)
+Viewer::Viewer(int width, int height, float fov)
 {
   // point params at the view struct. Permutations
   // will effect the struct
@@ -19,4 +19,9 @@ Viewer::Viewer(int width, int height, float fov=VIEWER_90_DEG)
   int i = IDX_IN_STRUCT(view, view.fov, float);
   parameter_ranges[i].min = VIEWER_90_DEG;
   parameter_ranges[i].max = VIEWER_90_DEG;
+
+  view.position = Vec3(0, 0, 0);
+  view.look = VEC3_FORWARD;
+
+  view.fov = fov;
 }

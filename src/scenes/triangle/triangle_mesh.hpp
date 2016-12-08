@@ -18,8 +18,9 @@ public:
   void permute()
   {
     float theta = randomf() * M_PI * 2;
-    float texcoord_scale = randomf();
-    printf("tex scale: %f\n", texcoord_scale);
+    float texcoord_scale = powf(randomf(), 3);
+
+    vertices.clear();
 
     for(int i = 3; i--;)
     {

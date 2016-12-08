@@ -13,10 +13,8 @@ struct viewer_props_t {
 
 class Viewer : public Percept {
 public:
-  Viewer(int width, int height, float fov);
-  virtual void render() = 0;
-
-protected:
-  int width, height;
+  Viewer(int width, int height, float fov=VIEWER_90_DEG);
+  void render();
   viewer_props_t view;
+  int width, height;
 };

@@ -1,45 +1,33 @@
 #include "opt.h"
 #include "base.hpp"
+#include "scenes/triangle/triangle_scene.hpp"
 
 static struct {
   unsigned int width = 640, height = 480;
-  unsigned int iterations = 1;
+  unsigned int iterations = 100;
 } PROPS;
 
 int main(int argc, const char* argv[])
 {
   openlog(argv[0], LOG_PERROR, 0);
+  srandom(time(NULL));
 
   USE_OPT
 
-  if(!glfwInit())
-  {
-    syslog(LOG_ERR, "Failed to initalize GLFW3");
-    exit(-1);
-  }
+  TriangleScene scene;
+  //unsigned int tag_dist[2] = { PROPS.iterations / 2, PROPS.iterations / 2 };
+  unsigned int tag_dist[2] = { PROPS.iterations, 0};
+  task_ctx_t ctx = {
+    .data_path = "./data",
+    .tag_distribution = tag_dist,
+    .tag_count = (int)PROPS.iterations,
+    .samples = PROPS.iterations
+  };
 
-  GLFWwindow* win = glfwCreateWindow(PROPS.width, PROPS.height, "Chimera", NULL, NULL);
-  if(!win)
-  {
-    syslog(LOG_ERR, "Failed to open window");
-    exit(-2);
-  }
+  Task task(&scene, ctx);
+  task.run();
 
-  glfwMakeContextCurrent(win);
-
-  int iterations = PROPS.iterations;
-  while(PROPS.iterations--)
-  {
-    glClear(GL_COLOR_BUFFER_BIT);
-    // PERMUTE, GENERATE, RENDER
-    glfwSwapBuffers(win);
-    glfwPollEvents();
-  }
-
-  syslog(LOG_INFO, "Finished %d/%d", (iterations - PROPS.iterations) - 1, iterations);
-  sleep(1);
-
-  glfwTerminate();
+  syslog(LOG_INFO, "Finished");
   closelog();
   return 0;
 }

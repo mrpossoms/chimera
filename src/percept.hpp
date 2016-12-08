@@ -4,10 +4,6 @@
 
 #define IDX_IN_STRUCT(base, field, type) (((size_t)(&field) - (size_t)(&base)) / sizeof(type))
 
-struct range_t {
-  float min, max;
-};
-
 // A percept is a heirarchical constuct for defining permutable properties
 // of a desired subject. For example. A physical object is a percept, but so
 // to are the visual characteristics of that object.
