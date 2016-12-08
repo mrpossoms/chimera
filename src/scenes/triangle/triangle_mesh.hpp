@@ -8,6 +8,12 @@ public:
   TriangleMesh()
   {
     // NOOP
+    range_t x = { .min = -10, .max = 10 };
+    range_t y = { .min = -10, .max = 10 };
+    range_t z = { .min = 1, .max = 20 };
+    parameter_ranges.push_back(x);
+    parameter_ranges.push_back(y);
+    parameter_ranges.push_back(z);
   }
 
   const void* vertex_buffer()
@@ -34,6 +40,18 @@ public:
 
       vertices.push_back(v);
     }
+
+    bounding_sphere.origin = Vec3(
+      randomf(parameter_ranges[0]),
+      randomf(parameter_ranges[1]),
+      randomf(parameter_ranges[2])
+    );
+
+    mat4x4_translate(transform,
+      bounding_sphere.origin.x,
+      bounding_sphere.origin.y,
+      bounding_sphere.origin.z
+    );
 
     generated = false;
   }

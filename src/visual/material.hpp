@@ -24,8 +24,9 @@ public:
   void permute();
   void render();
 
+  rgb_t* data;
+
 protected:
   void*  tag; // implementation dependent
-  rgb_t*  data;
   unsigned int width, height;
 };

@@ -11,8 +11,7 @@ void write_png_file(
   const char* path,
   int width,
   int height,
-  const rgb_t* buffer)
-  {
+  const rgb_t* buffer){
   int y;
 
   FILE *fp = fopen(path, "wb");
@@ -64,7 +63,8 @@ public:
       exit(-1);
     }
 
-    win = glfwCreateWindow(256, 256, "Chimera", NULL, NULL);
+    glfwWindowHint(GLFW_DOUBLEBUFFER, GL_FALSE);
+    win = glfwCreateWindow(128, 128, "Chimera", NULL, NULL);
     if(!win)
     {
       syslog(LOG_ERR, "Failed to open window");
@@ -76,11 +76,12 @@ public:
     glEnable(GL_TEXTURE_2D);
 
     // Chimera scene setup
-    view = new Viewer(256, 256);
+    view = new Viewer(128, 128);
     view->view.look = Vec3(0, 0, 1);
 
     range_t r = { 0, 1 };
-    noise = new UniformNoise(256, 256, r, r, r);
+    tri_noise = new UniformNoise(128, 128, r, r, r);
+    bg_noise = new UniformNoise(256, 256, r, r, r);
   }
 
   ~TriangleScene()
@@ -90,32 +91,41 @@ public:
 
   int tag()
   {
-    return 0;
+    return view->in_view(tri.bounding_sphere) ? 1 : 0;
   }
 
   void permute()
   {
     tri.permute();
-    noise->permute();
-    mat4x4_translate(tri.transform, 0, 0, 10);
+    tri_noise->permute();
+    bg_noise->permute();
   }
 
   void render()
   {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    view->render();
-    noise->render();
-    tri.render();
+    char title[256];
+    sprintf(title, "Chimera %d", tag());
+    glfwSetWindowTitle(win, title);
+    bg_noise->render();
+    glDrawPixels(
+      bg_noise->get_width(),
+      bg_noise->get_height(),
+      GL_RGB, GL_UNSIGNED_BYTE,
+      (void*)bg_noise->data
+    );
 
-    glfwSwapBuffers(win);
+    view->render();
+    tri_noise->render();
+    tri.render();
+    glFinish();
     glfwPollEvents();
-    sleep(1);
   }
 
   int save(const char* path)
   {
-    rgb_t frame_buffer[view->width * view->height * 4];
+    rgb_t frame_buffer[(view->width * 2) * (view->height * 2)];
 
     glReadPixels(
       0, 0,
@@ -134,6 +144,6 @@ public:
 private:
   GLFWwindow* win;
   TriangleMesh tri;
-  UniformNoise* noise;
+  UniformNoise *tri_noise, *bg_noise;
   Viewer* view;
 };

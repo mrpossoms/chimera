@@ -15,8 +15,8 @@ int main(int argc, const char* argv[])
   USE_OPT
 
   TriangleScene scene;
-  //unsigned int tag_dist[2] = { PROPS.iterations / 2, PROPS.iterations / 2 };
-  unsigned int tag_dist[2] = { PROPS.iterations, 0};
+  // unsigned int tag_dist[2] = { PROPS.iterations, 0 };
+  unsigned int tag_dist[2] = { PROPS.iterations / 2, PROPS.iterations / 2 };
   task_ctx_t ctx = {
     .data_path = "./data",
     .tag_distribution = tag_dist,
