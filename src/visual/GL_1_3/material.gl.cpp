@@ -78,8 +78,6 @@ void Material::render()
       GL_UNSIGNED_BYTE,
       (void*)data
     );
-
-    printf("Textured generated\n");
     gl->generated = true;
   }
 }

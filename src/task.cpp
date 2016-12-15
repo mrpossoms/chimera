@@ -40,7 +40,6 @@ void Task::run()
     }
     else
     {
-      printf("%d@ %d > %d\n", tag, current.tag_distribution[tag], target.tag_distribution[tag]);
       continue;
     }
   }
