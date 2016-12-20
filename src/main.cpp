@@ -4,7 +4,7 @@
 
 static struct {
   unsigned int width = 640, height = 480;
-  unsigned int iterations = 10000;
+  unsigned int iterations = 20000;
 } PROPS;
 
 int main(int argc, const char* argv[])

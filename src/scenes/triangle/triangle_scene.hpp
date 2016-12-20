@@ -9,6 +9,8 @@
 #define SAMPLE_WIDTH 128
 #define SAMPLE_HEIGHT 128
 
+#define GEN_GRAY
+
 void write_png_file_grey(
   const char* path,
   int width,
@@ -177,7 +179,12 @@ public:
 
   int save(const char* path)
   {
-    rgb_t frame_buffer[(view->width * 2) * (view->height * 2)];
+    unsigned int pixels = (view->width * 2) * (view->height * 2);
+#ifdef GEN_GRAY
+    uint8_t grey_buffer[pixels];
+#endif
+
+    rgb_t frame_buffer[pixels];
 
     glReadPixels(
       0, 0,
@@ -188,7 +195,18 @@ public:
 
     char file_path[256];
     sprintf(file_path, "%s/%lX%lX-%d.png", path, time(NULL), random(), tag());
+
+
+#ifdef GEN_GRAY
+    // convert to grey scale
+    for(int i = pixels; i--;){
+      rgb_t color = frame_buffer[i];
+      grey_buffer[i] = color.r / 3 + color.g / 3 + color.b / 3;
+    }
+    write_png_file_grey(file_path, view->width * 2, view->height * 2, grey_buffer);
+#else
     write_png_file_rgb(file_path, view->width * 2, view->height * 2, frame_buffer);
+#endif
 
     return CHIMERA_OK;
   }
