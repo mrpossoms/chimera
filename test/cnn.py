@@ -2,38 +2,35 @@
 from PIL import Image
 import tensorflow as tf
 import numpy as np
+import struct
 import os
 
 ever=0
 
 class TrainingSet():
-    def __init__(self, base_path):
-        self.sample_paths = os.listdir(base_path)
+    def __init__(self, path):
         self.index = 0
-
-        os.chdir(base_path)
+        self.file = open(path, mode='rb')
 
     def next_batch(self, size):
         images, labels = [], []
 
-        batch = self.sample_paths[self.index:self.index + size]
-        self.index += size
 
         # coord = tf.train.Coordinator()
         # threads = tf.train.start_queue_runners(coord=coord)
 
-        for path in batch:
-            file_content = tf.read_file(path)
-            print(path)
-            name_and_label = path.split('.')[0].split('-')
-            image = tf.to_float(tf.image.decode_png(file_content)) / 255.  # use png or jpg decoder based on your files.
-            images += [image.eval().flatten()]
+        for _ in range(size):
+            buf = self.file.read(128**2)
+            tag = struct.unpack('I', self.file.read(4))[0]
 
-            if name_and_label[1] is '1':
+            images += [ np.frombuffer(buf, dtype=np.uint8).reshape(128**2) / 255.0 ]
+
+            if tag == 1:
                 labels += [np.array([1, 0])]
             else:
                 labels += [np.array([0, 1])]
 
+        self.index += size
         # coord.request_stop()
         # coord.join(threads)
 
@@ -65,7 +62,7 @@ def max_pool_2x2(x):
 
 
 print("Building training set...")
-training_set = TrainingSet("../data")
+training_set = TrainingSet("../data/training_blob")
 
 with tf.Session() as sess:
     x = tf.placeholder(tf.float32, shape=[None, 128**2])
@@ -128,7 +125,8 @@ with tf.Session() as sess:
       if i%100 == 0:
         train_accuracy = accuracy.eval(feed_dict={
             x:batch[0], y_: batch[1], keep_prob: 1.0})
-        print("step %d, training accuracy %g"%(i, train_accuracy))
+        print("\nstep %d, training accuracy %g"%(i, train_accuracy))
+      os.write(1, bytearray('.', encoding='utf8'))
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
     # print("test accuracy %g"%accuracy.eval(feed_dict={

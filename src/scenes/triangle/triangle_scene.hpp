@@ -101,6 +101,11 @@ void write_png_file_rgb(
   fclose(fp);
 }
 
+void append_blob_file(int fd, const void* buf, size_t bytes, uint32_t tag)
+{
+  write(fd, buf, bytes);
+  write(fd, &tag, sizeof(uint32_t));
+}
 
 class TriangleScene : public Scene {
 public:
@@ -136,10 +141,14 @@ public:
     range_t r = { 0, 1 };
     tri_noise = new UniformNoise(SAMPLE_WIDTH >> 1, SAMPLE_HEIGHT >> 1, r, r, r);
     bg_noise = new UniformNoise(SAMPLE_WIDTH, SAMPLE_HEIGHT, r, r, r);
+
+    BLOB_FD = open("data/training_blob", O_CREAT | O_WRONLY | O_TRUNC);
+    assert(BLOB_FD >= 0);
   }
 
   ~TriangleScene()
   {
+    close(BLOB_FD);
     glfwTerminate();
   }
 
@@ -193,8 +202,8 @@ public:
       (void*)frame_buffer
     );
 
-    char file_path[256];
-    sprintf(file_path, "%s/%lX%lX-%d.png", path, time(NULL), random(), tag());
+    // char file_path[256];
+    // sprintf(file_path, "%s/%lX%lX-%d.png", path, time(NULL), random(), tag());
 
 
 #ifdef GEN_GRAY
@@ -203,9 +212,11 @@ public:
       rgb_t color = frame_buffer[i];
       grey_buffer[i] = color.r / 3 + color.g / 3 + color.b / 3;
     }
-    write_png_file_grey(file_path, view->width * 2, view->height * 2, grey_buffer);
+    // write_png_file_grey(file_path, view->width * 2, view->height * 2, grey_buffer);
+    append_blob_file(BLOB_FD, grey_buffer, sizeof(grey_buffer), tag());
 #else
-    write_png_file_rgb(file_path, view->width * 2, view->height * 2, frame_buffer);
+    // write_png_file_rgb(file_path, view->width * 2, view->height * 2, frame_buffer);
+    append_blob_file(BLOB_FD, frame_buffer, sizeof(frame_buffer), tag());
 #endif
 
     return CHIMERA_OK;
@@ -216,4 +227,5 @@ private:
   TriangleMesh tri;
   UniformNoise *tri_noise, *bg_noise;
   Viewer* view;
+  int BLOB_FD;
 };

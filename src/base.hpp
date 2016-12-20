@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <syslog.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <cfloat>
 #include <vector>
