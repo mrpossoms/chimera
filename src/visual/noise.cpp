@@ -23,7 +23,7 @@ UniformNoise::~UniformNoise()
 {
   delete parameters;
 
-  Material::~Material();
+  // Material::~Material();
 }
 
 void UniformNoise::permute()

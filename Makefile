@@ -17,8 +17,20 @@ SRC_GL=$(SRC_VISUAL)/GL_1_3
 # inter-project includes
 INC_PATHS+=-I$(EXT)/linmath.h -I$(EXT)/opt.h -I$(SRC) -I$(SRC_VISUAL)
 
-GLFW_LINK=-lglfw3 -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo -lpng
-LINK=$(GLFW_LINK)
+
+GLFW_LINK=-lglfw3
+GL_LINK= -lpng
+
+UNAME := $(shell uname -s)
+ifeq ($(UNAME),Darwin)
+	GL_LINK += $(GLFW_LINK) -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo
+endif
+ifeq ($(UNAME),Linux)
+	GL_LINK += -lGL -lglut -lGLU -lX11 -ldl -lpthread -lXxf86vm -lXrandr -lXi -lXinerama -lXcursor
+	CXX_FLAGS+=-D_XOPEN_SOURCE=500 -D_POSIX_C_SOURCE=200112L
+endif
+
+LINK=$(GL_LINK)
 
 all: findings.mk
 	$(CXXC) $(CXX_FLAGS) $(INC_PATHS) $(LIB_PATHS) $(SRC)/main.cpp -o $(OUT) $(LINK) $(OBJ)/*.o
@@ -48,7 +60,7 @@ noise.o:
 # 	$(CXXC) $(CXX_FLAGS) $(INC_PATHS) $(LIB_PATHS)
 
 clear-data:
-	rm ./data/*
+	rm ./data/* || true
 
 clean: clear-data
 	rm $(OBJ)/*.o || true

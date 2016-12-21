@@ -10,7 +10,7 @@ public:
     // NOOP
     range_t x = { .min = -10, .max = 10 };
     range_t y = { .min = -10, .max = 10 };
-    range_t z = { .min = 1, .max = 10 };
+    range_t z = { .min = 1, .max = 5 };
     parameter_ranges.push_back(x);
     parameter_ranges.push_back(y);
     parameter_ranges.push_back(z);

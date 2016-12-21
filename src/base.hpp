@@ -1,6 +1,13 @@
 #pragma once
 
+#ifdef __linux__
+#include <sys/types.h>
+#include <inttypes.h>
+#endif
+
+#include "opt.h"
 #include <math.h>
+#include <errno.h>
 #include <time.h>
 #include <assert.h>
 #include <syslog.h>
@@ -8,6 +15,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cfloat>
+#include <stdio.h>
 #include <vector>
 #include "linmath.h"
 

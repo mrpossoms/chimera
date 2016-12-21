@@ -1,6 +1,12 @@
 #pragma once
 
+#ifdef __APPLE__
 #include <GLFW/glfw3.h> // TODO move to move general visual scene
+#elif __linux__
+#include <GL/freeglut.h>
+#endif
+
+
 #include "chimera.h"
 #include "visual/visual.h"
 
@@ -111,6 +117,8 @@ class TriangleScene : public Scene {
 public:
   TriangleScene()
   {
+
+#ifdef __APPLE__
     // glfw setup
     if(!glfwInit())
     {
@@ -125,8 +133,14 @@ public:
       syslog(LOG_ERR, "Failed to open window");
       exit(-2);
     }
-
     glfwMakeContextCurrent(win);
+#elif __linux__
+    setenv ("DISPLAY", ":0", 0);
+    glutInit(&ARGC, (char**)ARGV);
+    glutInitDisplayMode(GLUT_RGBA);
+    glutInitWindowSize(SAMPLE_WIDTH, SAMPLE_WIDTH);
+    glutCreateWindow("Chimera");
+#endif
 
     glEnable(GL_TEXTURE_2D);
 
@@ -142,14 +156,18 @@ public:
     tri_noise = new UniformNoise(SAMPLE_WIDTH >> 1, SAMPLE_HEIGHT >> 1, r, r, r);
     bg_noise = new UniformNoise(SAMPLE_WIDTH, SAMPLE_HEIGHT, r, r, r);
 
+#ifdef GEN_GRAY
     BLOB_FD = open("data/training_blob", O_CREAT | O_WRONLY | O_TRUNC);
     assert(BLOB_FD >= 0);
+#endif
   }
 
   ~TriangleScene()
   {
+#ifdef GEN_GRAY
     close(BLOB_FD);
-    glfwTerminate();
+#endif
+    // glfwTerminate();
   }
 
   int tag()
@@ -168,9 +186,6 @@ public:
   {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    char title[256];
-    sprintf(title, "Chimera %d", tag());
-    glfwSetWindowTitle(win, title);
     bg_noise->render();
     glDrawPixels(
       bg_noise->get_width(),
@@ -183,7 +198,7 @@ public:
     tri_noise->render();
     tri.render();
     glFinish();
-    glfwPollEvents();
+    // glfwPollEvents();
   }
 
   int save(const char* path)
@@ -202,8 +217,6 @@ public:
       (void*)frame_buffer
     );
 
-    // char file_path[256];
-    // sprintf(file_path, "%s/%lX%lX-%d.png", path, time(NULL), random(), tag());
 
 
 #ifdef GEN_GRAY
@@ -215,15 +228,17 @@ public:
     // write_png_file_grey(file_path, view->width * 2, view->height * 2, grey_buffer);
     append_blob_file(BLOB_FD, grey_buffer, sizeof(grey_buffer), tag());
 #else
-    // write_png_file_rgb(file_path, view->width * 2, view->height * 2, frame_buffer);
-    append_blob_file(BLOB_FD, frame_buffer, sizeof(frame_buffer), tag());
+    char file_path[256];
+    sprintf(file_path, "%s/%lX%lX-%d.png", path, time(NULL), random(), tag());
+    write_png_file_rgb(file_path, view->width * 2, view->height * 2, frame_buffer);
+    //append_blob_file(BLOB_FD, frame_buffer, sizeof(frame_buffer), tag());
 #endif
 
     return CHIMERA_OK;
   }
 
 private:
-  GLFWwindow* win;
+  // GLFWwindow* win;
   TriangleMesh tri;
   UniformNoise *tri_noise, *bg_noise;
   Viewer* view;

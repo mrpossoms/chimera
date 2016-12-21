@@ -23,9 +23,27 @@ Task::~Task()
 
 void Task::run()
 {
+  int percent_complete = 0, last_percent_complete = 0;
+  time_t then = time(NULL);
+
+  syslog(LOG_INFO, "Generating training data.\n");
+
   while(current.samples < target.samples)
   {
     scene->permute();
+
+    percent_complete = current.samples * 100 / target.samples;
+
+    if(percent_complete > last_percent_complete)
+    {
+      time_t now = time(NULL);
+      float minutes_remaining = (now - then) * (100 - percent_complete) / 60.f;
+      then = now;
+
+      syslog(LOG_INFO, "%d%% - %f min remaining\n", percent_complete, minutes_remaining);
+
+      last_percent_complete = percent_complete;
+    }
 
     int tag = scene->tag();
     if(current.tag_distribution[tag] < target.tag_distribution[tag])

@@ -2,11 +2,8 @@
 
 #include "base.hpp"
 
-union vertex_t {
-  struct {
-    Vec3 a, b, c, d;
-  };
-  float v[12];
+struct vertex_t {
+  Vec3 a, b, c, d;
 };
 
 struct sphere_t {
