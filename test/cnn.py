@@ -61,6 +61,29 @@ def max_pool_2x2(x):
                         strides=[1, 2, 2, 1], padding='SAME')
 
 
+def shape_str(np_mat):
+    shape = ""
+    for dim in np_mat.shape:
+        shape += '-%d' % dim
+
+    return shape
+
+def save_layer(layer_path, w_tensor=None, b_tensor=None):
+    # make sure the la
+    try:
+        os.mkdir(layer_path)
+    except FileExistsError:
+        pass
+
+    if w_tensor is not None:
+        mat = w_tensor.eval().astype(float)
+        mat.tofile('%s/w%s' % (layer_path, shape_str(mat)))
+
+    if b_tensor is not None:
+        mat = b_tensor.eval().astype(float)
+        mat.tofile('%s/b%s' % (layer_path, shape_str(mat)))
+
+
 print("Building training set...")
 training_set = TrainingSet("../data/training_blob")
 
@@ -80,29 +103,29 @@ with tf.Session() as sess:
     h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
     h_pool1 = max_pool_2x2(h_conv1) # 64 x 64
     #---------------------------------------------------------------------------
-    W_conv2 = weight_variable([5, 5, 32, 64])
-    b_conv2 = bias_variable([64])
+    W_conv2 = weight_variable([5, 5, 32, 16])
+    b_conv2 = bias_variable([16])
 
     h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
     h_pool2 = max_pool_2x2(h_conv2) # 32 x 32
     #---------------------------------------------------------------------------
-    W_conv3 = weight_variable([5, 5, 64, 64])
-    b_conv3 = bias_variable([64])
+    W_conv3 = weight_variable([5, 5, 16, 8])
+    b_conv3 = bias_variable([8])
 
     h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
     h_pool3 = max_pool_2x2(h_conv3) # 16 x 16
     #---------------------------------------------------------------------------
-    W_conv4 = weight_variable([5, 5, 64, 64])
-    b_conv4 = bias_variable([64])
+    W_conv4 = weight_variable([5, 5, 8, 8])
+    b_conv4 = bias_variable([8])
 
     h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
     h_pool4 = max_pool_2x2(h_conv4) # 8 x 8
 
 
-    W_fc1 = weight_variable([8 * 8 * 64, 1024])
+    W_fc1 = weight_variable([8 * 8 * 8, 1024])
     b_fc1 = bias_variable([1024])
 
-    h_pool4_flat = tf.reshape(h_pool4, [-1, 8*8*64])
+    h_pool4_flat = tf.reshape(h_pool4, [-1, 8*8*8])
     h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
 
     keep_prob = tf.placeholder(tf.float32)
@@ -127,6 +150,15 @@ with tf.Session() as sess:
             x:batch[0], y_: batch[1], keep_prob: 1.0})
         print("\nstep %d, training accuracy %g"%(i, train_accuracy))
       os.write(1, bytearray('.', encoding='utf8'))
+
+      save_layer('conv1', w_tensor=W_conv1, b_tensor=b_conv1)
+      save_layer('conv1/conv2', w_tensor=W_conv2, b_tensor=b_conv2)
+      save_layer('conv1/conv2/conv3', w_tensor=W_conv3, b_tensor=b_conv3)
+      save_layer('conv1/conv2/conv3/conv4', w_tensor=W_conv4, b_tensor=b_conv4)
+      save_layer('conv1/conv2/conv3/conv4/fc1', w_tensor=W_fc1, b_tensor=b_fc1)
+      save_layer('conv1/conv2/conv3/conv4/fc1/fc2', w_tensor=W_fc2, b_tensor=b_fc2)
+
+
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
     # print("test accuracy %g"%accuracy.eval(feed_dict={

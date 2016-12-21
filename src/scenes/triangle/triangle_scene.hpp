@@ -238,7 +238,9 @@ public:
   }
 
 private:
-  // GLFWwindow* win;
+ifdef __APPLE__
+  GLFWwindow* win;
+#endif
   TriangleMesh tri;
   UniformNoise *tri_noise, *bg_noise;
   Viewer* view;
