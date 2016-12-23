@@ -149,17 +149,18 @@ with tf.Session() as sess:
         train_accuracy = accuracy.eval(feed_dict={
             x:batch[0], y_: batch[1], keep_prob: 1.0})
         print("\nstep %d, training accuracy %g"%(i, train_accuracy))
+        with open("results", "a") as text_file:
+                text_file.write("Step %d Accuracy: %s\n" % (i, train_accuracy))
       os.write(1, bytearray('.', encoding='utf8'))
-
-      save_layer('conv1', w_tensor=W_conv1, b_tensor=b_conv1)
-      save_layer('conv1/conv2', w_tensor=W_conv2, b_tensor=b_conv2)
-      save_layer('conv1/conv2/conv3', w_tensor=W_conv3, b_tensor=b_conv3)
-      save_layer('conv1/conv2/conv3/conv4', w_tensor=W_conv4, b_tensor=b_conv4)
-      save_layer('conv1/conv2/conv3/conv4/fc1', w_tensor=W_fc1, b_tensor=b_fc1)
-      save_layer('conv1/conv2/conv3/conv4/fc1/fc2', w_tensor=W_fc2, b_tensor=b_fc2)
-
-
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+
+    save_layer('conv1', w_tensor=W_conv1, b_tensor=b_conv1)
+    save_layer('conv1/conv2', w_tensor=W_conv2, b_tensor=b_conv2)
+    save_layer('conv1/conv2/conv3', w_tensor=W_conv3, b_tensor=b_conv3)
+    save_layer('conv1/conv2/conv3/conv4', w_tensor=W_conv4, b_tensor=b_conv4)
+    save_layer('conv1/conv2/conv3/conv4/fc1', w_tensor=W_fc1, b_tensor=b_fc1)
+    save_layer('conv1/conv2/conv3/conv4/fc1/fc2', w_tensor=W_fc2, b_tensor=b_fc2)
+
 
     # print("test accuracy %g"%accuracy.eval(feed_dict={
     #     x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
