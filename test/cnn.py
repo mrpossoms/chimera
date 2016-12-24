@@ -7,7 +7,7 @@ import os
 
 ever=0
 
-class TrainingSet():
+class BlobTrainingSet():
     def __init__(self, path):
         self.index = 0
         self.file = open(path, mode='rb')
@@ -68,6 +68,33 @@ def shape_str(np_mat):
 
     return shape
 
+def shape_from_str(str):
+    shape = []
+    str = str.replace('b-', '').replace('w-', '').split('-')
+
+    for size in str:
+        shape.append(int(size))
+
+    return shape
+
+def load_layer(layer_path, w_tensor, b_tensor):
+    weights, biases = None, None
+
+    for file in os.listdir(layer_path):
+        if file[0] is not 'b' and file[0] is not 'w':
+            continue
+
+        shape = shape_from_str(file)
+        mat = np.fromfile('%s/%s' % (layer_path, file), dtype=float).reshape(shape)
+        if file[0] is 'b':
+            biases = mat
+            print(mat)
+        elif file[0] is 'w':
+            weights = mat
+
+    return w_tensor.assign(weights), b_tensor.assign(biases)
+
+
 def save_layer(layer_path, w_tensor=None, b_tensor=None):
     # make sure the la
     try:
@@ -85,7 +112,7 @@ def save_layer(layer_path, w_tensor=None, b_tensor=None):
 
 
 print("Building training set...")
-training_set = TrainingSet("../data/training_blob")
+training_set = BlobTrainingSet("../data/training_blob")
 
 with tf.Session() as sess:
     x = tf.placeholder(tf.float32, shape=[None, 128**2])
@@ -142,6 +169,16 @@ with tf.Session() as sess:
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
     sess.run(tf.global_variables_initializer())
+
+    W_conv1, b_conv1 = load_layer('conv1', w_tensor=W_conv1, b_tensor=b_conv1)
+    W_conv2, b_conv2 = load_layer('conv1/conv2', w_tensor=W_conv2, b_tensor=b_conv2)
+    W_conv3, b_conv3 = load_layer('conv1/conv2/conv3', w_tensor=W_conv3, b_tensor=b_conv3)
+    W_conv4, b_conv4 = load_layer('conv1/conv2/conv3/conv4', w_tensor=W_conv4, b_tensor=b_conv4)
+    W_fc1, b_fc1 = load_layer('conv1/conv2/conv3/conv4/fc1', w_tensor=W_fc1, b_tensor=b_fc1)
+    W_fc2, b_fc2 = load_layer('conv1/conv2/conv3/conv4/fc1/fc2', w_tensor=W_fc2, b_tensor=b_fc2)
+
+    print('-----------------')
+    print(b_fc2.eval())
 
     for i in range(20000):
       batch = training_set.next_batch(50)
