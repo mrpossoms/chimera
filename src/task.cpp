@@ -48,10 +48,11 @@ void Task::run()
     int tag = scene->tag();
 
     // find the next desired tag to keep training samples uniform
-    unsigned int wanted_tag = current.tag_count - 1, number = current.tag_distribution[wanted_tag];
-    for(int i = current.tag_count - 1; i--;)
+    unsigned int wanted_tag = 0;
+    unsigned int number = current.tag_distribution[0];
+    for(int i = current.tag_count; i--;)
     {
-      if(number < current.tag_distribution[i])
+      if(number > current.tag_distribution[i])
       {
         wanted_tag = i;
         number = current.tag_distribution[i];

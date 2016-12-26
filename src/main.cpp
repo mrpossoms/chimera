@@ -67,7 +67,7 @@ int main(int argc, const char* argv[])
   task_ctx_t ctx = {
     .data_path = "./data",
     .tag_distribution = tag_dist,
-    .tag_count = (int)PROPS.iterations,
+    .tag_count = 2,
     .samples = PROPS.iterations
   };
 

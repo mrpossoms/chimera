@@ -199,7 +199,7 @@ public:
     view->render();
     tri_noise->render();
     tri.render();
-    
+
     glFinish();
 
 #ifdef __APPLE__
