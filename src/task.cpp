@@ -46,7 +46,19 @@ void Task::run()
     }
 
     int tag = scene->tag();
-    if(current.tag_distribution[tag] < target.tag_distribution[tag])
+
+    // find the next desired tag to keep training samples uniform
+    unsigned int wanted_tag = current.tag_count - 1, number = current.tag_distribution[wanted_tag];
+    for(int i = current.tag_count - 1; i--;)
+    {
+      if(number < current.tag_distribution[i])
+      {
+        wanted_tag = i;
+        number = current.tag_distribution[i];
+      }
+    }
+
+    if(tag == wanted_tag)
     {
       // if we don't already have too many of that tag
       // then we will keep it

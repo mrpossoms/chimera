@@ -15,7 +15,7 @@
 #define SAMPLE_WIDTH 128
 #define SAMPLE_HEIGHT 128
 
-#define GEN_GRAY
+// #define GEN_GRAY
 
 void write_png_file_grey(
   const char* path,
@@ -134,6 +134,7 @@ public:
       exit(-2);
     }
     glfwMakeContextCurrent(win);
+    syslog(LOG_INFO, "GLFW window created");
 #elif __linux__
     setenv ("DISPLAY", ":0", 0);
     glutInit(&ARGC, (char**)ARGV);
@@ -166,8 +167,9 @@ public:
   {
 #ifdef GEN_GRAY
     close(BLOB_FD);
+#else
+    glfwTerminate();
 #endif
-    // glfwTerminate();
   }
 
   int tag()
@@ -197,8 +199,12 @@ public:
     view->render();
     tri_noise->render();
     tri.render();
+    
     glFinish();
-    // glfwPollEvents();
+
+#ifdef __APPLE__
+    glfwPollEvents();
+#endif
   }
 
   int save(const char* path)
@@ -216,8 +222,6 @@ public:
       GL_RGB, GL_UNSIGNED_BYTE,
       (void*)frame_buffer
     );
-
-
 
 #ifdef GEN_GRAY
     // convert to grey scale
@@ -238,7 +242,7 @@ public:
   }
 
 private:
-ifdef __APPLE__
+#ifdef __APPLE__
   GLFWwindow* win;
 #endif
   TriangleMesh tri;
