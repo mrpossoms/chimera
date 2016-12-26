@@ -15,7 +15,7 @@
 #define SAMPLE_WIDTH 128
 #define SAMPLE_HEIGHT 128
 
-#define GEN_GRAY
+// #define GEN_GRAY
 
 void write_png_file_grey(
   const char* path,
@@ -128,6 +128,7 @@ public:
 
     glfwWindowHint(GLFW_DOUBLEBUFFER, GL_FALSE);
     win = glfwCreateWindow(SAMPLE_WIDTH >> 1, SAMPLE_HEIGHT >> 1, "Chimera", NULL, NULL);
+
     if(!win)
     {
       syslog(LOG_ERR, "Failed to open window");
@@ -150,15 +151,18 @@ public:
     // glPixelTransferf(GL_BLUE_SCALE, 0.0820);
 
     // Chimera scene setup
-    view = new Viewer(SAMPLE_WIDTH >> 1, SAMPLE_HEIGHT >> 1);
+    glViewport(0, 0, SAMPLE_WIDTH, SAMPLE_HEIGHT);
+    view = new Viewer(SAMPLE_WIDTH, SAMPLE_HEIGHT);
     view->view.look = Vec3(0, 0, 1);
 
-    range_t r = { 0, 1 };
-    tri_noise = new UniformNoise(SAMPLE_WIDTH >> 1, SAMPLE_HEIGHT >> 1, r, r, r);
-    bg_noise = new UniformNoise(SAMPLE_WIDTH, SAMPLE_HEIGHT, r, r, r);
+
+
+    range_t l = { 0, .5 }, u = { 0.5, 0.1 }, z = { 0, 0 };
+    tri_noise = new UniformNoise(SAMPLE_WIDTH >> 1, SAMPLE_HEIGHT >> 1, z, u, z);
+    bg_noise = new UniformNoise(SAMPLE_WIDTH, SAMPLE_HEIGHT, z, z, z);
 
 #ifdef GEN_GRAY
-    BLOB_FD = open("data/training_blob", O_CREAT | O_WRONLY | O_TRUNC);
+    BLOB_FD = open("data/training_blob", O_CREAT | O_WRONLY | O_TRUNC, 0666);
     assert(BLOB_FD >= 0);
 #endif
   }
@@ -211,7 +215,7 @@ public:
 
   int save(const char* path)
   {
-    unsigned int pixels = (view->width * 2) * (view->height * 2);
+    unsigned int pixels = (view->width) * (view->height);
 #ifdef GEN_GRAY
     uint8_t grey_buffer[pixels];
 #endif
@@ -220,7 +224,7 @@ public:
 
     glReadPixels(
       0, 0,
-      view->width * 2, view->height * 2,
+      view->width, view->height,
       GL_RGB, GL_UNSIGNED_BYTE,
       (void*)frame_buffer
     );
@@ -236,7 +240,7 @@ public:
 #else
     char file_path[256];
     sprintf(file_path, "%s/%lX%lX-%d.png", path, time(NULL), random(), tag());
-    write_png_file_rgb(file_path, view->width * 2, view->height * 2, frame_buffer);
+    write_png_file_rgb(file_path, view->width, view->height, frame_buffer);
     //append_blob_file(BLOB_FD, frame_buffer, sizeof(frame_buffer), tag());
 #endif
 

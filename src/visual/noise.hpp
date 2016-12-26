@@ -10,4 +10,6 @@ public:
 
   void sample_at(unsigned int x, unsigned int y, void* textel);
   void permute();
+private:
+  range_t rand_range[3];
 };

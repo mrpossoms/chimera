@@ -11,6 +11,10 @@ UniformNoise::UniformNoise(
   int width, int height,
   range_t red, range_t green, range_t blue) : Material(width, height)
 {
+  rand_range[0] = red;
+  rand_range[1] = green;
+  rand_range[2] = blue;
+
   noise_params_t* p = new noise_params_t();
   p->red   = red;
   p->green = green;
@@ -33,8 +37,8 @@ void UniformNoise::permute()
   // enforce range constraints
   for(int i = 3; i--;)
   {
-    p->v[i].min = randomf();
-    p->v[i].max = randomf();
+    p->v[i].min = randomf(rand_range[i]);
+    p->v[i].max = randomf(rand_range[i]);
 
     if(p->v[i].min > p->v[i].max)
     {
@@ -54,6 +58,6 @@ void UniformNoise::sample_at(unsigned int x, unsigned int y, void* textel)
 
   for(int i = 3; i--;)
   {
-    t->v[i] = (uint8_t)(randomf(p->v[i]) * 255.f);
+    t->v[i] = p->v[i].max * 255.f;//(uint8_t)(randomf(p->v[i]) * 255.f);
   }
 }
