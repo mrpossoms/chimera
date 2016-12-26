@@ -15,7 +15,7 @@
 #define SAMPLE_WIDTH 128
 #define SAMPLE_HEIGHT 128
 
-// #define GEN_GRAY
+#define GEN_GRAY
 
 void write_png_file_grey(
   const char* path,
@@ -167,7 +167,9 @@ public:
   {
 #ifdef GEN_GRAY
     close(BLOB_FD);
-#else
+#endif
+
+#ifdef __APPLE__
     glfwTerminate();
 #endif
   }
