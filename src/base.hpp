@@ -27,13 +27,13 @@ struct range_t {
 
 static inline float randomf()
 {
-  int m = 1 << 10;
-  float s = (float)m;
+  const int m = 2048;
+  const float s = (float)m;
   return (random() % m) / s;
 }
 
 static inline float randomf(range_t& range)
 {
   float s = randomf();
-  return (s * range.max) + range.min;
+  return (s * (range.max - range.min)) + range.min;
 }

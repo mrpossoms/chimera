@@ -15,7 +15,7 @@
 #define SAMPLE_WIDTH 128
 #define SAMPLE_HEIGHT 128
 
-// #define GEN_GRAY
+#define GEN_GRAY
 
 void write_png_file_grey(
   const char* path,
@@ -215,6 +215,7 @@ public:
 
   int save(const char* path)
   {
+
     unsigned int pixels = (view->width) * (view->height);
 #ifdef GEN_GRAY
     uint8_t grey_buffer[pixels];
