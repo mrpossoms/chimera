@@ -160,8 +160,9 @@ public:
 
 
     range_t l = { 0, .5 }, u = { 0.5, 0.1 }, z = { 0, 0 };
-    tri_noise = new UniformNoise(SAMPLE_WIDTH >> 1, SAMPLE_HEIGHT >> 1, z, u, z);
-    bg_noise = new UniformNoise(SAMPLE_WIDTH, SAMPLE_HEIGHT, z, z, z);
+    range_t one = { 0, 1 };
+    tri_noise = new UniformNoise(SAMPLE_WIDTH >> 1, SAMPLE_HEIGHT >> 1, one, one, one);
+    bg_noise = new UniformNoise(SAMPLE_WIDTH, SAMPLE_HEIGHT, one, one, one);
 
     if(VIS_OPTS.write_blob)
     {

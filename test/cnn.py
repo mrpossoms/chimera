@@ -8,7 +8,6 @@ import numpy as np
 import struct
 import os
 
-ever=0
 old_cwd = os.getcwd()
 
 class FileTrainingSet():
@@ -233,9 +232,10 @@ with tf.Session() as sess:
     print("Building training set...")
     training_set = BlobTrainingSet("../data/training_blob")
     test_set = FileTrainingSet("../data/test")
+    test_wd = os.getcwd()
+    os.chdir(old_cwd)
 
-
-    for i in range(10):
+    for i in range(1000):
       batch = training_set.next_batch(50)
       # batch = mnist.train.next_batch(50)
       if i%10 == 0:
@@ -254,9 +254,9 @@ with tf.Session() as sess:
     save_layer('conv1/conv2/conv3/conv4/fc1', w_tensor=W_fc1, b_tensor=b_fc1)
     save_layer('conv1/conv2/conv3/conv4/fc1/fc2', w_tensor=W_fc2, b_tensor=b_fc2)
 
-
-    for _ in range(3):
-        batch = test_set.next_batch(1, decoder=tf.image.decode_jpeg)
+    os.chdir(test_wd)
+    for _ in range(6):
+        batch = test_set.next_batch(1) #, decoder=tf.image.decode_jpeg)
         print("test accuracy %g"%accuracy.eval(feed_dict={
             x: batch[0], y_: batch[1], keep_prob: 1.0}))
 
