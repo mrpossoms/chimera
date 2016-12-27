@@ -1,5 +1,5 @@
-from tensorflow.examples.tutorials.mnist import input_data
-mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
+# from tensorflow.examples.tutorials.mnist import input_data
+# mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
 
 
 from PIL import Image
@@ -9,6 +9,41 @@ import struct
 import os
 
 ever=0
+
+class FileTrainingSet():
+    def __init__(self, base_path):
+        self.sample_paths = os.listdir(base_path)
+        self.index = 0
+
+        os.chdir(base_path)
+
+    def next_batch(self, size, decoder=tf.image.decode_png):
+        images, labels = [], []
+
+        batch = self.sample_paths[self.index:self.index + size]
+        self.index += size
+
+        # coord = tf.train.Coordinator()
+        # threads = tf.train.start_queue_runners(coord=coord)
+
+        for path in batch:
+            if path[0] is '.': continue
+
+            file_content = tf.read_file(path)
+            print(path)
+            name_and_label = path.split('.')[0].split('-')
+            image = tf.to_float(decoder(file_content)) / 255.  # use png or jpg decoder based on your files.
+            images += [tf.image.resize_images(tf.image.rgb_to_grayscale([image]), [28, 28]).eval().flatten()]
+
+            if name_and_label[1] is '1':
+                labels += [np.array([1.0, 0.0])]
+            else:
+                labels += [np.array([0.0, 1.0])]
+
+        # coord.request_stop()
+        # coord.join(threads)
+
+        return np.asarray(images), np.asarray(labels).reshape(len(labels), 2)
 
 class BlobTrainingSet():
     def __init__(self, path):
@@ -39,7 +74,7 @@ class BlobTrainingSet():
         # coord.request_stop()
         # coord.join(threads)
 
-        return np.asarray(images), np.asarray(labels).reshape(50, 2)
+        return np.asarray(images), np.asarray(labels).reshape(len(labels), 2)
 
 def weight_variable(shape):
   initial = tf.truncated_normal(shape, stddev=0.1)
@@ -118,6 +153,7 @@ def save_layer(layer_path, w_tensor=None, b_tensor=None):
 
 print("Building training set...")
 training_set = BlobTrainingSet("../data/training_blob")
+test_set = FileTrainingSet("../data/test")
 
 with tf.Session() as sess:
     width, height = 28, 28
@@ -195,7 +231,7 @@ with tf.Session() as sess:
     print('-----------------')
     print(b_fc2.eval())
 
-    for i in range(20000):
+    for i in range(4):
       batch = training_set.next_batch(50)
       # batch = mnist.train.next_batch(50)
       if i%100 == 0:
@@ -215,5 +251,6 @@ with tf.Session() as sess:
     save_layer('conv1/conv2/conv3/conv4/fc1/fc2', w_tensor=W_fc2, b_tensor=b_fc2)
 
 
-    # print("test accuracy %g"%accuracy.eval(feed_dict={
-    #     x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
+    batch = test_set.next_batch(6, decoder=tf.image.decode_jpeg)
+    print("test accuracy %g"%accuracy.eval(feed_dict={
+        x: batch[0], y_: batch[1], keep_prob: 1.0}))
