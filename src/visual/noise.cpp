@@ -58,6 +58,6 @@ void UniformNoise::sample_at(unsigned int x, unsigned int y, void* textel)
 
   for(int i = 3; i--;)
   {
-    t->v[i] = p->v[i].max * 255.f;//(uint8_t)(randomf(p->v[i]) * 255.f);
+    t->v[i] = (uint8_t)(randomf(p->v[i]) * 255.f);
   }
 }
