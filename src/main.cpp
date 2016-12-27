@@ -7,6 +7,18 @@ static struct {
   unsigned int iterations = 20000 * 50;
 } PROPS;
 
+chimera_visual_options VIS_OPTS;
+
+void opt_to_file(const char* value, int present)
+{
+  if(present) VIS_OPTS.write_blob = false;
+}
+
+void opt_set_rgb(const char* value, int present)
+{
+  if(present) VIS_OPTS.is_rgb = true;
+}
+
 void opt_daemon(const char* value, int present)
 {
   if(!present) return;
@@ -50,6 +62,9 @@ int main(int argc, const char* argv[])
   openlog(argv[0], LOG_PERROR, 0);
   srandom(time(NULL));
 
+  VIS_OPTS.is_rgb = false;
+  VIS_OPTS.write_blob = true;
+
   USE_OPT
 
   OPT_LIST_START
@@ -58,6 +73,18 @@ int main(int argc, const char* argv[])
     "Starts chimera as a daemon.",
     0,
     opt_daemon
+  },
+  {
+    "--rgb",
+    "Writes images out in u8 RGB format.",
+    0,
+    opt_set_rgb
+  },
+  {
+    "--files",
+    "Outputs images as files rather than a contigious blob.",
+    0,
+    opt_to_file
   },
   OPT_LIST_END("Chimera")
 

@@ -12,19 +12,19 @@
 
 #include "triangle_mesh.hpp"
 
-#define SAMPLE_WIDTH 28
-#define SAMPLE_HEIGHT 28
-
-#define GEN_GRAY
+#define SAMPLE_WIDTH 112
+#define SAMPLE_HEIGHT 112
 
 void write_png_file_grey(
   const char* path,
   int width,
   int height,
-  const uint8_t* buffer){
-  int y;
+  const void* image){
 
+  int y;
   FILE *fp = fopen(path, "wb");
+  const uint8_t* buffer = (const uint8_t*)image;
+
   if(!fp) abort();
 
   png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -66,10 +66,12 @@ void write_png_file_rgb(
   const char* path,
   int width,
   int height,
-  const rgb_t* buffer){
-  int y;
+  const void* image){
 
+  int y;
   FILE *fp = fopen(path, "wb");
+  const rgb_t* buffer = (const rgb_t*)image;
+
   if(!fp) abort();
 
   png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -161,17 +163,19 @@ public:
     tri_noise = new UniformNoise(SAMPLE_WIDTH >> 1, SAMPLE_HEIGHT >> 1, z, u, z);
     bg_noise = new UniformNoise(SAMPLE_WIDTH, SAMPLE_HEIGHT, z, z, z);
 
-#ifdef GEN_GRAY
-    BLOB_FD = open("data/training_blob", O_CREAT | O_WRONLY | O_TRUNC, 0666);
-    assert(BLOB_FD >= 0);
-#endif
+    if(VIS_OPTS.write_blob)
+    {
+      BLOB_FD = open("data/training_blob", O_CREAT | O_WRONLY | O_TRUNC, 0666);
+      assert(BLOB_FD >= 0);
+    }
   }
 
   ~TriangleScene()
   {
-#ifdef GEN_GRAY
-    close(BLOB_FD);
-#endif
+    if(VIS_OPTS.write_blob)
+    {
+      close(BLOB_FD);
+    }
 
 #ifdef __APPLE__
     glfwTerminate();
@@ -217,34 +221,49 @@ public:
   {
 
     unsigned int pixels = (view->width) * (view->height);
-#ifdef GEN_GRAY
     uint8_t grey_buffer[pixels];
-#endif
+    rgb_t color_buffer[pixels];
 
-    rgb_t frame_buffer[pixels];
+    const void* frame_buffer;
+    size_t buffer_size;
+    void (*png_encoder)(const char*, int, int, const void*);
 
     glReadPixels(
       0, 0,
       view->width, view->height,
       GL_RGB, GL_UNSIGNED_BYTE,
-      (void*)frame_buffer
+      (void*)color_buffer
     );
 
-    char file_path[256];
-    sprintf(file_path, "%s/%lX%lX-%d.png", path, time(NULL), random(), tag());
-
-#ifdef GEN_GRAY
-    // convert to grey scale
-    for(int i = pixels; i--;){
-      rgb_t color = frame_buffer[i];
-      grey_buffer[i] = color.r / 3 + color.g / 3 + color.b / 3;
+    if(VIS_OPTS.is_rgb)
+    {
+      png_encoder = write_png_file_rgb;
+      buffer_size = sizeof(color_buffer);
+      frame_buffer = (const void*)color_buffer;
     }
-    // write_png_file_grey(file_path, view->width, view->height, grey_buffer);
-    append_blob_file(BLOB_FD, grey_buffer, sizeof(grey_buffer), tag());
-#else
-    write_png_file_rgb(file_path, view->width, view->height, frame_buffer);
-    //append_blob_file(BLOB_FD, frame_buffer, sizeof(frame_buffer), tag());
-#endif
+    else
+    {
+      // convert to grey scale
+      for(int i = pixels; i--;){
+        rgb_t color = color_buffer[i];
+        grey_buffer[i] = color.r / 3 + color.g / 3 + color.b / 3;
+      }
+
+      png_encoder = write_png_file_grey;
+      buffer_size = sizeof(grey_buffer);
+      frame_buffer = (const void*)grey_buffer;
+    }
+
+    if(VIS_OPTS.write_blob)
+    {
+      append_blob_file(BLOB_FD, frame_buffer, buffer_size, tag());
+    }
+    else
+    {
+      char file_path[256];
+      sprintf(file_path, "%s/%lX%lX-%d.png", path, time(NULL), random(), tag());
+      png_encoder(file_path, view->width, view->height, frame_buffer);
+    }
 
     return CHIMERA_OK;
   }

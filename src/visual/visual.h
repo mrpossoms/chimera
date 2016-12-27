@@ -7,4 +7,11 @@
 #include "viewer.hpp"
 #include <png.h>
 
+struct chimera_visual_options {
+  bool write_blob;
+  bool is_rgb;
+};
+
+extern chimera_visual_options VIS_OPTS;
+
 #endif

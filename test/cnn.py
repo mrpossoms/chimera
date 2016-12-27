@@ -9,11 +9,17 @@ import struct
 import os
 
 ever=0
+old_cwd = os.getcwd()
 
 class FileTrainingSet():
     def __init__(self, base_path):
         self.sample_paths = os.listdir(base_path)
         self.index = 0
+
+        # remove hidden files
+        for file in self.sample_paths:
+            if file[0] == '.':
+                self.sample_paths.remove(file)
 
         os.chdir(base_path)
 
@@ -27,13 +33,11 @@ class FileTrainingSet():
         # threads = tf.train.start_queue_runners(coord=coord)
 
         for path in batch:
-            if path[0] is '.': continue
-
             file_content = tf.read_file(path)
             print(path)
             name_and_label = path.split('.')[0].split('-')
-            image = tf.to_float(decoder(file_content)) / 255.  # use png or jpg decoder based on your files.
-            images += [tf.image.resize_images(tf.image.rgb_to_grayscale([image]), [28, 28]).eval().flatten()]
+            image = tf.image.rgb_to_grayscale(decoder(file_content)) #tf.to_float(decoder(file_content)) / 255.  # use png or jpg decoder based on your files.
+            images += [tf.image.resize_images([image], [112, 112]).eval().flatten() / 255.0]
 
             if name_and_label[1] is '1':
                 labels += [np.array([1.0, 0.0])]
@@ -58,12 +62,12 @@ class BlobTrainingSet():
         # threads = tf.train.start_queue_runners(coord=coord)
 
         for _ in range(size):
-            buf = self.file.read(28**2)
+            buf = self.file.read(112**2)
             tag = struct.unpack('I', self.file.read(4))[0]
 
             assert tag is 0 or tag is 1
 
-            images += [ np.frombuffer(buf, dtype=np.uint8).reshape(28**2) / 255.0 ]
+            images += [ np.frombuffer(buf, dtype=np.uint8).reshape(112**2) / 255.0 ]
             # Image.frombytes('L', (128, 128), buf).show()
             if tag == 1:
                 labels += [np.array([1.0, 0.0])]
@@ -150,13 +154,8 @@ def save_layer(layer_path, w_tensor=None, b_tensor=None):
         mat = b_tensor.eval().astype(float)
         mat.tofile('%s/b%s' % (layer_path, shape_str(mat)))
 
-
-print("Building training set...")
-training_set = BlobTrainingSet("../data/training_blob")
-test_set = FileTrainingSet("../data/test")
-
 with tf.Session() as sess:
-    width, height = 28, 28
+    width, height = 112, 112
     classes = 2
 
     # width, height = 28, 28
@@ -175,25 +174,25 @@ with tf.Session() as sess:
     # slides filter across image, run through the ReLU activation
     # function, kernel bias is also applied
     h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
-    # h_pool1 = max_pool_2x2(h_conv1) # 64 x 64
+    h_pool1 = max_pool_2x2(h_conv1) # 56 X 56
     #---------------------------------------------------------------------------
     W_conv2 = weight_variable([5, 5, 32, 16])
     b_conv2 = bias_variable([16])
 
-    h_conv2 = tf.nn.relu(conv2d(h_conv1, W_conv2) + b_conv2)
-    # h_pool2 = max_pool_2x2(h_conv2) # 32 x 32
+    h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
+    h_pool2 = max_pool_2x2(h_conv2) # 28 x 28
     #---------------------------------------------------------------------------
     W_conv3 = weight_variable([5, 5, 16, 8])
     b_conv3 = bias_variable([8])
 
-    h_conv3 = tf.nn.relu(conv2d(h_conv2, W_conv3) + b_conv3)
-    h_pool3 = max_pool_2x2(h_conv3) # 16 x 16
+    h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
+    h_pool3 = max_pool_2x2(h_conv3) # 14 x 14
     #---------------------------------------------------------------------------
     W_conv4 = weight_variable([5, 5, 8, 8])
     b_conv4 = bias_variable([8])
 
     h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
-    h_pool4 = max_pool_2x2(h_conv4) # 8 x 8
+    h_pool4 = max_pool_2x2(h_conv4) # 7 x 7
 
     hp4_width, hp4_height = 7, 7 #h_conv4.shape[1] / 2, h_conv4.shape[2] / 2
     # hp4_width, hp4_height = 32, 32
@@ -231,10 +230,15 @@ with tf.Session() as sess:
     print('-----------------')
     print(b_fc2.eval())
 
-    for i in range(4):
+    print("Building training set...")
+    training_set = BlobTrainingSet("../data/training_blob")
+    test_set = FileTrainingSet("../data/test")
+
+
+    for i in range(10):
       batch = training_set.next_batch(50)
       # batch = mnist.train.next_batch(50)
-      if i%100 == 0:
+      if i%10 == 0:
         train_accuracy = accuracy.eval(feed_dict={
             x:batch[0], y_: batch[1], keep_prob: 1.0})
         print("\nstep %d, training accuracy %g"%(i, train_accuracy))
@@ -251,6 +255,9 @@ with tf.Session() as sess:
     save_layer('conv1/conv2/conv3/conv4/fc1/fc2', w_tensor=W_fc2, b_tensor=b_fc2)
 
 
-    batch = test_set.next_batch(6, decoder=tf.image.decode_jpeg)
-    print("test accuracy %g"%accuracy.eval(feed_dict={
-        x: batch[0], y_: batch[1], keep_prob: 1.0}))
+    for _ in range(3):
+        batch = test_set.next_batch(1, decoder=tf.image.decode_jpeg)
+        print("test accuracy %g"%accuracy.eval(feed_dict={
+            x: batch[0], y_: batch[1], keep_prob: 1.0}))
+
+    os.chdir(old_cwd)
