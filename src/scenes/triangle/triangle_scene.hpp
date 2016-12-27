@@ -12,8 +12,8 @@
 
 #include "triangle_mesh.hpp"
 
-#define SAMPLE_WIDTH 128
-#define SAMPLE_HEIGHT 128
+#define SAMPLE_WIDTH 28
+#define SAMPLE_HEIGHT 28
 
 #define GEN_GRAY
 
@@ -230,17 +230,18 @@ public:
       (void*)frame_buffer
     );
 
+    char file_path[256];
+    sprintf(file_path, "%s/%lX%lX-%d.png", path, time(NULL), random(), tag());
+
 #ifdef GEN_GRAY
     // convert to grey scale
     for(int i = pixels; i--;){
       rgb_t color = frame_buffer[i];
       grey_buffer[i] = color.r / 3 + color.g / 3 + color.b / 3;
     }
-    // write_png_file_grey(file_path, view->width * 2, view->height * 2, grey_buffer);
+    // write_png_file_grey(file_path, view->width, view->height, grey_buffer);
     append_blob_file(BLOB_FD, grey_buffer, sizeof(grey_buffer), tag());
 #else
-    char file_path[256];
-    sprintf(file_path, "%s/%lX%lX-%d.png", path, time(NULL), random(), tag());
     write_png_file_rgb(file_path, view->width, view->height, frame_buffer);
     //append_blob_file(BLOB_FD, frame_buffer, sizeof(frame_buffer), tag());
 #endif
