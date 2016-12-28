@@ -151,10 +151,6 @@ public:
     // glEnable(GL_LIGHTING);
     // glEnable(GL_LIGHT0);
 
-    // glPixelTransferf(GL_RED_SCALE, 0.3086);
-    // glPixelTransferf(GL_GREEN_SCALE, 0.6094);
-    // glPixelTransferf(GL_BLUE_SCALE, 0.0820);
-
     // Chimera scene setup
     glViewport(0, 0, SAMPLE_WIDTH, SAMPLE_HEIGHT);
     view = new Viewer(SAMPLE_WIDTH, SAMPLE_HEIGHT);
@@ -279,6 +275,15 @@ public:
         rgb_t color = color_buffer[i];
         grey_buffer[i] = color.r / 3 + color.g / 3 + color.b / 3;
       }
+
+      // compute false variance to check for data validity
+      float mu = grey_buffer[random() % pixels] / 255.f, var = 0;
+      for(int i = pixels; i--;)
+      {
+        var += powf(mu - grey_buffer[i] / 255.f, 2);
+      }
+
+      printf("variance %f\n", var);
 
       png_encoder = write_png_file_grey;
       buffer_size = sizeof(grey_buffer);

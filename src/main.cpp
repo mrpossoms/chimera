@@ -4,7 +4,7 @@
 
 static struct {
   unsigned int width = 640, height = 480;
-  unsigned int iterations = 20000 * 50;
+  unsigned int iterations = 50000;
 } PROPS;
 
 chimera_visual_options VIS_OPTS;
@@ -22,6 +22,13 @@ void opt_set_rgb(const char* value, int present)
 void opt_blob_trunc(const char* value, int present)
 {
   VIS_OPTS.do_trunc = present ? O_TRUNC : 0;
+}
+
+void opt_itr(const char* value, int present)
+{
+	if(!present) return;
+
+	PROPS.iterations = atoi(value);
 }
 
 void opt_daemon(const char* value, int present)
@@ -98,7 +105,12 @@ int main(int argc, const char* argv[])
     0,
     opt_blob_trunc
   },
-  OPT_LIST_END("Chimera")
+  {
+    "-n",
+    "Sets number of samples that should be generated.",
+    1,
+    opt_itr
+  }, OPT_LIST_END("Chimera")
 
   TriangleScene scene;
   // unsigned int tag_dist[2] = { PROPS.iterations, 0 };
