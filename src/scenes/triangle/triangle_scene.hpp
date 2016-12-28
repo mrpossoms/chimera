@@ -192,6 +192,14 @@ public:
 
   void render()
   {
+    GLenum error = glGetError();
+
+    if(error != GL_NO_ERROR)
+    {
+        syslog(LOG_ERR, "GL_ERROR: %d\n", error);
+	assert(error == GL_NO_ERROR);
+    }
+
     glClear(GL_COLOR_BUFFER_BIT);
 
     tri.permute();
@@ -276,14 +284,23 @@ public:
         grey_buffer[i] = color.r / 3 + color.g / 3 + color.b / 3;
       }
 
-      // compute false variance to check for data validity
-      float mu = grey_buffer[random() % pixels] / 255.f, var = 0;
-      for(int i = pixels; i--;)
+      static float last_var = 0;
+      if(random() % 1000 == 0) // check approx 0.1% of the time
       {
-        var += powf(mu - grey_buffer[i] / 255.f, 2);
+
+	      // compute false variance to check for data validity
+	      float mu = grey_buffer[random() % pixels] / 255.f, var = 0;
+	      for(int i = pixels; i--;)
+	      {
+		var += powf(mu - grey_buffer[i] / 255.f, 2);
+	      }
+
+	      printf("variance %f\n", var);
+	      
+	      assert(last_var != var);
+	      last_var = var;
       }
 
-      printf("variance %f\n", var);
 
       png_encoder = write_png_file_grey;
       buffer_size = sizeof(grey_buffer);

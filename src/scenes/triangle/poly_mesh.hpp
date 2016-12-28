@@ -40,7 +40,7 @@ public:
     for(int i = (2 + (random() % 20)) * 3; i--;)
     {
 
-      angle += powf(randomf(one), 3);
+      angle += random_gauss(0, M_PI / 8.0f);//powf(randomf(one), 3);
 
       last += Vec3(
           cosf(angle),

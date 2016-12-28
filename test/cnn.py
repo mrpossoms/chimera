@@ -167,7 +167,7 @@ with tf.Session() as sess:
     # that this dimension will be equal to that of the number of training
     # samples that are part of the selected batch
     x_image = tf.reshape(x, [-1,width,height,1])
-    W_conv1 = weight_variable([5, 5, 1, 32]) # 5 x 5 x 1 kernels 32 deep?
+    W_conv1 = weight_variable([7, 7, 1, 32]) # 5 x 5 x 1 kernels 32 deep?
     b_conv1 = bias_variable([32]) # A bias for each kernel neuron
 
     # slides filter across image, run through the ReLU activation
@@ -204,10 +204,15 @@ with tf.Session() as sess:
     keep_prob = tf.placeholder(tf.float32)
     h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
-    W_fc2 = weight_variable([1024, classes])
-    b_fc2 = bias_variable([classes])
+    W_fc2 = weight_variable([1024, 512])
+    b_fc2 = bias_variable([512])
+    h_fc2 = tf.nn.relu(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
+    h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob)
 
-    y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
+    W_fc3 = weight_variable([512, classes])
+    b_fc3 = bias_variable([classes])
+
+    y_conv = tf.matmul(h_fc2_drop, W_fc3) + b_fc3
 
     cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y_conv, y_))
     train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
@@ -235,10 +240,10 @@ with tf.Session() as sess:
     test_wd = os.getcwd()
     os.chdir(old_cwd)
 
-    for i in range(400):
+    for i in range(5200):
       batch = training_set.next_batch(50)
       # batch = mnist.train.next_batch(50)
-      if i%10 == 0:
+      if i%100 == 0:
         train_accuracy = accuracy.eval(feed_dict={
             x:batch[0], y_: batch[1], keep_prob: 1.0})
         print("\nstep %d, training accuracy %g"%(i, train_accuracy))
@@ -255,7 +260,7 @@ with tf.Session() as sess:
     save_layer('conv1/conv2/conv3/conv4/fc1/fc2', w_tensor=W_fc2, b_tensor=b_fc2)
 
     os.chdir(test_wd)
-    for _ in range(6):
+    for _ in range(13):
         batch = test_set.next_batch(1) #, decoder=tf.image.decode_jpeg)
         print("test accuracy %g"%accuracy.eval(feed_dict={
             x: batch[0], y_: batch[1], keep_prob: 1.0}))
