@@ -19,6 +19,11 @@ void opt_set_rgb(const char* value, int present)
   if(present) VIS_OPTS.is_rgb = true;
 }
 
+void opt_blob_trunc(const char* value, int present)
+{
+  VIS_OPTS.do_trunc = present ? O_TRUNC : 0;
+}
+
 void opt_daemon(const char* value, int present)
 {
   if(!present) return;
@@ -64,6 +69,7 @@ int main(int argc, const char* argv[])
 
   VIS_OPTS.is_rgb = false;
   VIS_OPTS.write_blob = true;
+  VIS_OPTS.do_trunc = false;
 
   USE_OPT
 
@@ -85,6 +91,12 @@ int main(int argc, const char* argv[])
     "Outputs images as files rather than a contigious blob.",
     0,
     opt_to_file
+  },
+  {
+    "--trunc",
+    "Truncates blob file.",
+    0,
+    opt_blob_trunc
   },
   OPT_LIST_END("Chimera")
 

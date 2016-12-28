@@ -8,9 +8,9 @@ public:
   TriangleMesh()
   {
     // NOOP
-    range_t x = { .min = -10, .max = 10 };
-    range_t y = { .min = -10, .max = 10 };
-    range_t z = { .min = 1, .max = 5 };
+    range_t x = { .min = -1, .max = 1 };
+    range_t y = { .min = -1, .max = 1 };
+    range_t z = { .min = 3, .max = 5 };
     parameter_ranges.push_back(x);
     parameter_ranges.push_back(y);
     parameter_ranges.push_back(z);
@@ -34,6 +34,7 @@ public:
       vertex_t v = {
         .a = Vec3(cos(i * t + theta), sin(i * t + theta), 0),
         .b = Vec3(cos(i * t) / 2.f + 0.5f, sin(i * t) / 2.f + 0.5f, 0),
+        .c = Vec3(0, 0, -1),
       };
 
       v.b *= texcoord_scale;
@@ -56,6 +57,23 @@ public:
     generated = false;
   }
 
+  float in_view(Viewer& viewer)
+  {
+    float frac = 0;
+    Vec3 vec;
+
+    for(int i = 3; i--;)
+    {
+      mat4x4_mul_vec3(vec.v, transform, vertices[i].a.v);
+      if(viewer.in_view(vec))
+      {
+        frac += 1 / 0.3f;
+      }
+    }
+
+    return frac;
+  }
+
   void render()
   {
     // if(!generated)
@@ -64,6 +82,7 @@ public:
     //
     //   generated = true;
     // }
+
     glPushMatrix();
     glMultMatrixf((const GLfloat*)transform);
 
@@ -73,10 +92,12 @@ public:
     {
       // glColor3f(1, 0, 0);
       glTexCoord2f(vertices[i].b.x, vertices[i].b.y);
+      glNormal3f(vertices[i].c.x, vertices[i].c.y, vertices[i].c.z);
       glVertex2f(vertices[i].a.x, vertices[i].a.y);
     }
 
     glEnd();
+    glPopMatrix();
   }
 private:
   bool generated;

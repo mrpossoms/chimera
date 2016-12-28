@@ -11,6 +11,7 @@
 #include "visual/visual.h"
 
 #include "triangle_mesh.hpp"
+#include "poly_mesh.hpp"
 
 #define SAMPLE_WIDTH 112
 #define SAMPLE_HEIGHT 112
@@ -147,6 +148,8 @@ public:
 #endif
 
     glEnable(GL_TEXTURE_2D);
+    // glEnable(GL_LIGHTING);
+    // glEnable(GL_LIGHT0);
 
     // glPixelTransferf(GL_RED_SCALE, 0.3086);
     // glPixelTransferf(GL_GREEN_SCALE, 0.6094);
@@ -157,16 +160,14 @@ public:
     view = new Viewer(SAMPLE_WIDTH, SAMPLE_HEIGHT);
     view->view.look = Vec3(0, 0, 1);
 
-
-
-    range_t l = { 0, .5 }, u = { 0.5, 0.1 }, z = { 0, 0 };
     range_t one = { 0, 1 };
-    tri_noise = new UniformNoise(SAMPLE_WIDTH >> 1, SAMPLE_HEIGHT >> 1, one, one, one);
+    range_t low = { 0.4, 0.6 };
+    tri_noise = new UniformNoise(32, 32, one, one, one);
     bg_noise = new UniformNoise(SAMPLE_WIDTH, SAMPLE_HEIGHT, one, one, one);
 
     if(VIS_OPTS.write_blob)
     {
-      BLOB_FD = open("data/training_blob", O_CREAT | O_WRONLY | O_TRUNC, 0666);
+      BLOB_FD = open("data/training_blob", O_CREAT | O_WRONLY | VIS_OPTS.do_trunc, 0666);
       assert(BLOB_FD >= 0);
     }
   }
@@ -185,20 +186,21 @@ public:
 
   int tag()
   {
-    return view->in_view(tri.bounding_sphere) ? 1 : 0;
+    return in_view;
   }
 
   void permute()
   {
-    tri.permute();
-    tri_noise->permute();
-    bg_noise->permute();
+    in_view = random() % 2;
   }
 
   void render()
   {
     glClear(GL_COLOR_BUFFER_BIT);
 
+    tri.permute();
+
+    bg_noise->permute();
     bg_noise->render();
     glDrawPixels(
       bg_noise->get_width(),
@@ -206,10 +208,38 @@ public:
       GL_RGB, GL_UNSIGNED_BYTE,
       (void*)bg_noise->data
     );
-
     view->render();
-    tri_noise->render();
-    tri.render();
+
+    tri_noise->permute();
+    for(int i = 4; i--;)
+    {
+      tri_noise->render();
+      bg_poly.permute();
+      bg_poly.render();
+    }
+
+    if(in_view)
+    {
+      for(int i = 3; i--;)
+      {
+        float mean = tri_noise->noise_params[i].max - tri_noise->noise_params[i].min;
+
+        if(tri_noise->noise_params[i].min > 0.5)
+        {
+          tri_noise->noise_params[i].max = tri_noise->noise_params[i].min;
+          tri_noise->noise_params[i].min = 0;
+        }
+        else
+        {
+          tri_noise->noise_params[i].min = tri_noise->noise_params[i].max;
+          tri_noise->noise_params[i].max = 1;
+        }
+      }
+
+      tri_noise->permute();
+      tri_noise->render();
+      tri.render();
+    }
 
     glFinish();
 
@@ -274,7 +304,9 @@ private:
   GLFWwindow* win;
 #endif
   TriangleMesh tri;
+  PolyMesh bg_poly;
   UniformNoise *tri_noise, *bg_noise;
   Viewer* view;
+  bool in_view;
   int BLOB_FD;
 };

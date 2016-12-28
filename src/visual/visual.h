@@ -10,6 +10,7 @@
 struct chimera_visual_options {
   bool write_blob;
   bool is_rgb;
+  int do_trunc;
 };
 
 extern chimera_visual_options VIS_OPTS;

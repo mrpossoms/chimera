@@ -27,19 +27,18 @@ void Viewer::render()
 
   glMatrixMode(GL_MODELVIEW);
   glLoadMatrixf((float*)MV);
-  glPushMatrix();
 
   mat4x4_mul(MVP, P, MV);
 }
 
-bool Viewer::in_view(sphere_t& bs)
+bool Viewer::in_view(Vec3& point)
 {
   vec4 res;
 
-  mat4x4_mul_vec3(res, MVP, bs.origin.v);
+  mat4x4_mul_vec3(res, MVP, point.v);
   vec4_scale(res, res, 1 / res[3]);
 
-  return res[0] >= -0.95f && res[0] <= 0.95f &&
-         res[1] >= -0.95f && res[1] <= 0.95f &&
+  return res[0] >= -1 && res[0] <= 1 &&
+         res[1] >= -1 && res[1] <= 1 &&
          res[2] > 0.1f;
 }

@@ -235,7 +235,7 @@ with tf.Session() as sess:
     test_wd = os.getcwd()
     os.chdir(old_cwd)
 
-    for i in range(1000):
+    for i in range(400):
       batch = training_set.next_batch(50)
       # batch = mnist.train.next_batch(50)
       if i%10 == 0:

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base.hpp"
+#include "viewer.hpp"
 
 struct vertex_t {
   Vec3 a, b, c, d;
@@ -22,4 +23,5 @@ public:
 
   // methods
   const void* vertex_buffer();
+  float in_view(Viewer& viewer);
 };
