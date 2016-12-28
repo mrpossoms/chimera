@@ -112,8 +112,8 @@ void write_png_file_rgb(
 
 void append_blob_file(int fd, const void* buf, size_t bytes, uint32_t tag)
 {
-  write(fd, buf, bytes);
-  write(fd, &tag, sizeof(uint32_t));
+  assert(write(fd, buf, bytes) == bytes);
+  assert(write(fd, &tag, sizeof(uint32_t)) == sizeof(uint32_t));
 }
 
 class TriangleScene : public Scene {
