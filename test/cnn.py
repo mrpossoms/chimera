@@ -240,10 +240,10 @@ with tf.Session() as sess:
     test_wd = os.getcwd()
     os.chdir(old_cwd)
 
-    for i in range(5200):
+    for i in range(40):
       batch = training_set.next_batch(50)
       # batch = mnist.train.next_batch(50)
-      if i%100 == 0:
+      if i%10 == 0:
         train_accuracy = accuracy.eval(feed_dict={
             x:batch[0], y_: batch[1], keep_prob: 1.0})
         print("\nstep %d, training accuracy %g"%(i, train_accuracy))

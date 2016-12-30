@@ -11,11 +11,12 @@ class Percept {
 public:
   // permute uniformly randomizes the properties of the percept
   void permute();
+  void add_parameter(range_t range);
 
   virtual void render() = 0;
 
   std::vector<range_t> parameter_ranges;
-  float* parameters;
+  float* parameters = NULL;
 
   std::vector<Percept> children;
 };

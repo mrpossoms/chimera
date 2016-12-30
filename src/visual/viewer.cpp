@@ -13,7 +13,7 @@ Viewer::Viewer(int width, int height, float fov)
   for(int i = sizeof(view) / sizeof(float); i--;)
   {
     const range_t norm = { -1, 1 };
-    parameter_ranges.push_back(norm);
+    add_parameter(norm);
   }
 
   int i = IDX_IN_STRUCT(view, view.fov, float);

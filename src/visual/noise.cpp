@@ -11,9 +11,9 @@ UniformNoise::UniformNoise(
   int width, int height,
   range_t red, range_t green, range_t blue) : Material(width, height)
 {
-  parameter_ranges.push_back(red);
-  parameter_ranges.push_back(green);
-  parameter_ranges.push_back(blue);
+  add_parameter(red);
+  add_parameter(green);
+  add_parameter(blue);
 
   noise_params_t* p = new noise_params_t();
   p->red   = red;
@@ -33,6 +33,8 @@ UniformNoise::~UniformNoise()
 
 void UniformNoise::permute()
 {
+  Material::permute();
+
   // enforce range constraints
   for(int i = 3; i--;)
   {
@@ -46,8 +48,6 @@ void UniformNoise::permute()
       noise_params[i].max = temp;
     }
   }
-
-  Material::permute();
 }
 
 void UniformNoise::sample_at(unsigned int x, unsigned int y, void* textel)

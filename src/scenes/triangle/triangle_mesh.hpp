@@ -11,9 +11,9 @@ public:
     range_t x = { .min = -1, .max = 1 };
     range_t y = { .min = -1, .max = 1 };
     range_t z = { .min = 3, .max = 5 };
-    parameter_ranges.push_back(x);
-    parameter_ranges.push_back(y);
-    parameter_ranges.push_back(z);
+    add_parameter(x);
+    add_parameter(y);
+    add_parameter(z);
   }
 
   const void* vertex_buffer()

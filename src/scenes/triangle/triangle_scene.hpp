@@ -10,115 +10,15 @@
 #include "chimera.h"
 #include "visual/visual.h"
 
-#include "triangle_mesh.hpp"
+#include "ngon_mesh.hpp"
 #include "poly_mesh.hpp"
 
 #define SAMPLE_WIDTH 112
 #define SAMPLE_HEIGHT 112
 
-void write_png_file_grey(
-  const char* path,
-  int width,
-  int height,
-  const void* image){
-
-  int y;
-  FILE *fp = fopen(path, "wb");
-  const uint8_t* buffer = (const uint8_t*)image;
-
-  if(!fp) abort();
-
-  png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-  if (!png) abort();
-
-  png_infop info = png_create_info_struct(png);
-  if (!info) abort();
-
-  if (setjmp(png_jmpbuf(png))) abort();
-
-  png_init_io(png, fp);
-
-  // Output is 8bit depth, RGBA format.
-  png_set_IHDR(
-    png,
-    info,
-    width, height,
-    8,
-    PNG_COLOR_TYPE_GRAY,
-    PNG_INTERLACE_NONE,
-    PNG_COMPRESSION_TYPE_DEFAULT,
-    PNG_FILTER_TYPE_DEFAULT
-  );
-  png_write_info(png, info);
-
-  png_bytep rows[height];
-  for(int i = height; i--;)
-  {
-    rows[i] = (png_bytep)(buffer + i * width);
-  }
-
-  png_write_image(png, rows);
-  png_write_end(png, NULL);
-
-  fclose(fp);
-}
-
-void write_png_file_rgb(
-  const char* path,
-  int width,
-  int height,
-  const void* image){
-
-  int y;
-  FILE *fp = fopen(path, "wb");
-  const rgb_t* buffer = (const rgb_t*)image;
-
-  if(!fp) abort();
-
-  png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-  if (!png) abort();
-
-  png_infop info = png_create_info_struct(png);
-  if (!info) abort();
-
-  if (setjmp(png_jmpbuf(png))) abort();
-
-  png_init_io(png, fp);
-
-  // Output is 8bit depth, RGBA format.
-  png_set_IHDR(
-    png,
-    info,
-    width, height,
-    8,
-    PNG_COLOR_TYPE_RGB,
-    PNG_INTERLACE_NONE,
-    PNG_COMPRESSION_TYPE_DEFAULT,
-    PNG_FILTER_TYPE_DEFAULT
-  );
-  png_write_info(png, info);
-
-  png_bytep rows[height];
-  for(int i = height; i--;)
-  {
-    rows[i] = (png_bytep)(buffer + i * width);
-  }
-
-  png_write_image(png, rows);
-  png_write_end(png, NULL);
-
-  fclose(fp);
-}
-
-void append_blob_file(int fd, const void* buf, size_t bytes, uint32_t tag)
-{
-  assert(write(fd, buf, bytes) == bytes);
-  assert(write(fd, &tag, sizeof(uint32_t)) == sizeof(uint32_t));
-}
-
 class TriangleScene : public Scene {
 public:
-  TriangleScene()
+  TriangleScene() : tri(3, 3), regular(4, 12)
   {
 
 #ifdef __APPLE__
@@ -147,6 +47,10 @@ public:
     glutCreateWindow("Chimera");
 #endif
 
+    regular.parameter_ranges[0].min = regular.parameter_ranges[1].min = -2;
+    regular.parameter_ranges[0].min = regular.parameter_ranges[1].max = 2;
+    regular.parameter_ranges[2].min = 2;
+    regular.parameter_ranges[2].max = 3;
     glEnable(GL_TEXTURE_2D);
     // glEnable(GL_LIGHTING);
     // glEnable(GL_LIGHT0);
@@ -197,12 +101,25 @@ public:
     if(error != GL_NO_ERROR)
     {
         syslog(LOG_ERR, "GL_ERROR: %d\n", error);
-	assert(error == GL_NO_ERROR);
+        assert(error == GL_NO_ERROR);
     }
 
     glClear(GL_COLOR_BUFFER_BIT);
 
     tri.permute();
+
+    float contrast_split = randomf();
+    float min = contrast_split, max = 1;
+
+    if(contrast_split < 0.5)
+    {
+      min = 0, max = contrast_split;
+    }
+
+    for(int i = 3; i--;){
+      range_t range = { min, max };
+      bg_noise->parameter_ranges[i] = range;
+    }
 
     bg_noise->permute();
     bg_noise->render();
@@ -214,30 +131,36 @@ public:
     );
     view->render();
 
-    tri_noise->permute();
-    for(int i = 4; i--;)
+    for(int i = 3; i--;){
+      range_t range = { min, max };
+      tri_noise->parameter_ranges[i] = range;
+    }
+
+    for(int i = 2 + random() % 10; i--;)
     {
+      tri_noise->permute();
       tri_noise->render();
-      bg_poly.permute();
-      bg_poly.render();
+      // bg_poly.permute();
+      // bg_poly.render();
+
+      regular.parameter_ranges[0].min = -2;
+      regular.parameter_ranges[1].max = 2;
+      regular.permute();
+      regular.render();
     }
 
     if(in_view)
     {
+      min = 0, max = contrast_split;
+      if(contrast_split < 0.5)
+      {
+        min = contrast_split, max = 1;
+      }
+
       for(int i = 3; i--;)
       {
-        float mean = tri_noise->noise_params[i].max - tri_noise->noise_params[i].min;
-
-        if(tri_noise->noise_params[i].min > 0.5)
-        {
-          tri_noise->noise_params[i].max = tri_noise->noise_params[i].min;
-          tri_noise->noise_params[i].min = 0;
-        }
-        else
-        {
-          tri_noise->noise_params[i].min = tri_noise->noise_params[i].max;
-          tri_noise->noise_params[i].max = 1;
-        }
+        range_t range = { min, max };
+        tri_noise->parameter_ranges[i] = range;
       }
 
       tri_noise->permute();
@@ -292,11 +215,11 @@ public:
 	      float mu = grey_buffer[random() % pixels] / 255.f, var = 0;
 	      for(int i = pixels; i--;)
 	      {
-		var += powf(mu - grey_buffer[i] / 255.f, 2);
+          var += powf(mu - grey_buffer[i] / 255.f, 2);
 	      }
 
 	      printf("variance %f\n", var);
-	      
+
 	      assert(last_var != var);
 	      last_var = var;
       }
@@ -325,7 +248,7 @@ private:
 #ifdef __APPLE__
   GLFWwindow* win;
 #endif
-  TriangleMesh tri;
+  NgonMesh tri, regular;
   PolyMesh bg_poly;
   UniformNoise *tri_noise, *bg_noise;
   Viewer* view;
