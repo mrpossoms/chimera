@@ -31,6 +31,12 @@ void opt_itr(const char* value, int present)
 	PROPS.iterations = atoi(value);
 }
 
+void opt_blob_path(const char* value, int present)
+{
+	if(!present) return;
+	VIS_OPTS.blob_path = value;
+}
+
 void opt_daemon(const char* value, int present)
 {
   if(!present) return;
@@ -77,6 +83,7 @@ int main(int argc, const char* argv[])
   VIS_OPTS.is_rgb = false;
   VIS_OPTS.write_blob = true;
   VIS_OPTS.do_trunc = false;
+  VIS_OPTS.blob_path = "./data/training_blob";
 
   USE_OPT
 
@@ -110,7 +117,14 @@ int main(int argc, const char* argv[])
     "Sets number of samples that should be generated.",
     1,
     opt_itr
-  }, OPT_LIST_END("Chimera")
+  },
+  {
+    "-o",
+    "Output location of blob",
+    1,
+    opt_blob_path
+  }
+  OPT_LIST_END("Chimera")
 
   TriangleScene scene;
   // unsigned int tag_dist[2] = { PROPS.iterations, 0 };
