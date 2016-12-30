@@ -10,6 +10,7 @@ import os
 
 old_cwd = os.getcwd()
 
+
 class FileTrainingSet():
     def __init__(self, base_path):
         self.sample_paths = os.listdir(base_path)
@@ -24,7 +25,6 @@ class FileTrainingSet():
 
     def reset(self):
         self.index = 0
-
 
     def next_batch(self, size, decoder=tf.image.decode_png):
         images, labels = [], []
@@ -51,6 +51,7 @@ class FileTrainingSet():
         # coord.join(threads)
 
         return np.asarray(images), np.asarray(labels).reshape(len(labels), 2)
+
 
 class BlobTrainingSet():
     def __init__(self, path):
@@ -88,13 +89,16 @@ class BlobTrainingSet():
 
         return np.asarray(images), np.asarray(labels).reshape(len(labels), 2)
 
+
 def weight_variable(shape):
   initial = tf.truncated_normal(shape, stddev=0.1)
   return tf.Variable(initial)
 
+
 def bias_variable(shape):
   initial = tf.constant(0.1, shape=shape)
   return tf.Variable(initial)
+
 
 def conv2d(x, W):
     # strides
@@ -103,6 +107,7 @@ def conv2d(x, W):
     #   [2] - height
     #   [3] - channels
   return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
+
 
 def max_pool_2x2(x):
   # max pooling here is sliding a 2x2 filter across the activation
@@ -120,6 +125,7 @@ def shape_str(np_mat):
 
     return shape
 
+
 def shape_from_str(str):
     shape = []
     str = str.replace('b-', '').replace('w-', '').split('-')
@@ -128,6 +134,7 @@ def shape_from_str(str):
         shape.append(int(size))
 
     return shape
+
 
 def load_layer(layer_path, w_tensor, b_tensor):
     weights, biases = None, None
@@ -161,6 +168,20 @@ def save_layer(layer_path, w_tensor=None, b_tensor=None):
     if b_tensor is not None:
         mat = b_tensor.eval().astype(float)
         mat.tofile('%s/b%s' % (layer_path, shape_str(mat)))
+
+
+def save_image(path, array):
+    bitmap = (array * 255).astype(np.uint8)
+    img = Image.fromarray(bitmap, mode='L')
+    img.save(path + '.png')
+
+
+def save_activation_map(path, tensor, name):
+    act_maps = np.dsplit(tensor[0], tensor.shape[3])
+    filter_idx = 0
+    for act_map in act_maps:
+        save_image(path + '/' + str(filter_idx), act_map.reshape(act_map.shape[:2]))
+        filter_idx += 1
 
 with tf.Session() as sess:
     width, height = 112, 112
@@ -203,6 +224,7 @@ with tf.Session() as sess:
     b_conv4 = bias_variable([4])
 
     h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
+
     h_pool4 = tf.nn.l2_normalize(max_pool_2x2(h_conv4), [1, 2]) # 7 x 7
     #h_pool4 = max_pool_2x2(h_conv4)# 7 x 7
 
@@ -254,10 +276,10 @@ with tf.Session() as sess:
     test_wd = os.getcwd()
     os.chdir(old_cwd)
 
-    for i in range(2000):
+    for i in range(1):
       batch = training_set.next_batch(50)
       # batch = mnist.train.next_batch(50)
-      if i%100 == 0:
+      if i%10 == 0:
         train_accuracy = accuracy.eval(feed_dict={
             x:batch[0], y_: batch[1], keep_prob: 1.0})
         print("\nstep %d, training accuracy %g"%(i, train_accuracy))
@@ -274,10 +296,20 @@ with tf.Session() as sess:
     save_layer('conv1/conv2/conv3/conv4/fc1', w_tensor=W_fc1, b_tensor=b_fc1)
     save_layer('conv1/conv2/conv3/conv4/fc1/fc2', w_tensor=W_fc2, b_tensor=b_fc2)
 
-    os.chdir(test_wd)
-    for _ in range(13):
+    for i in range(13):
+        os.chdir(test_wd)
         batch = test_set.next_batch(1) #, decoder=tf.image.decode_jpeg)
         print("test accuracy %g"%accuracy.eval(feed_dict={
             x: batch[0], y_: batch[1], keep_prob: 1.0}))
+
+        os.chdir(old_cwd)
+        path = "activations/%d" % i
+        try:
+            os.makedirs(path)
+        except FileExistsError:
+            pass
+
+        save_image(path + '/input', batch[0].reshape([112, 112]))
+        save_activation_map(path, h_pool4.eval(feed_dict={x: batch[0]}), "Test%d" % i)
 
     os.chdir(old_cwd)
