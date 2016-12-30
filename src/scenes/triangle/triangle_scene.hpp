@@ -16,9 +16,12 @@
 #define SAMPLE_WIDTH 112
 #define SAMPLE_HEIGHT 112
 
+const range_t PI_2 = { -M_PI / 4.f, M_PI / 4.f };
+const range_t ZERO = { 0, 0 };
+
 class TriangleScene : public Scene {
 public:
-  TriangleScene() : tri(3, 3), regular(4, 12)
+  TriangleScene() : tri(3, 3, ZERO, ZERO), regular(4, 12, PI_2, PI_2)
   {
 
 #ifdef __APPLE__
