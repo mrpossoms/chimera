@@ -67,7 +67,7 @@ public:
 
     if(VIS_OPTS.write_blob)
     {
-      BLOB_FD = open("data/training_blob", O_CREAT | O_WRONLY | VIS_OPTS.do_trunc, 0666);
+      BLOB_FD = open(VIS_OPTS.blob_path, O_CREAT | O_WRONLY | O_APPEND | VIS_OPTS.do_trunc, 0666);
       assert(BLOB_FD >= 0);
     }
   }

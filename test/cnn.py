@@ -22,6 +22,10 @@ class FileTrainingSet():
 
         os.chdir(base_path)
 
+    def reset(self):
+        self.index = 0
+
+
     def next_batch(self, size, decoder=tf.image.decode_png):
         images, labels = [], []
 
@@ -52,6 +56,11 @@ class BlobTrainingSet():
     def __init__(self, path):
         self.index = 0
         self.file = open(path, mode='rb')
+
+    def reset(self):
+        self.index = 0
+        self.file.seek(0);
+
 
     def next_batch(self, size):
         images, labels = [], []
@@ -236,6 +245,7 @@ with tf.Session() as sess:
 
     print("Building training set...")
     training_set = BlobTrainingSet("../data/training_blob")
+    #training_set = BlobTrainingSet("../data/blob1")
     test_set = FileTrainingSet("../data/test")
     test_wd = os.getcwd()
     os.chdir(old_cwd)
@@ -247,10 +257,11 @@ with tf.Session() as sess:
         train_accuracy = accuracy.eval(feed_dict={
             x:batch[0], y_: batch[1], keep_prob: 1.0})
         print("\nstep %d, training accuracy %g"%(i, train_accuracy))
+
         with open("results", "a") as text_file:
-                text_file.write("Step %d Accuracy: %s\n" % (i, train_accuracy))
-      os.write(1, bytearray('.', encoding='utf8'))
-      train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+          text_file.write("Step %d Accuracy: %s\n" % (i, train_accuracy))
+          os.write(1, bytearray('.', encoding='utf8'))
+          train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
     save_layer('conv1', w_tensor=W_conv1, b_tensor=b_conv1)
     save_layer('conv1/conv2', w_tensor=W_conv2, b_tensor=b_conv2)
