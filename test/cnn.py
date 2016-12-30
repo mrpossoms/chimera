@@ -176,38 +176,42 @@ with tf.Session() as sess:
     # that this dimension will be equal to that of the number of training
     # samples that are part of the selected batch
     x_image = tf.reshape(x, [-1,width,height,1])
-    W_conv1 = weight_variable([7, 7, 1, 32]) # 5 x 5 x 1 kernels 32 deep?
+    W_conv1 = weight_variable([5, 5, 1, 32]) # 5 x 5 x 1 kernels 32 deep?
     b_conv1 = bias_variable([32]) # A bias for each kernel neuron
 
     # slides filter across image, run through the ReLU activation
     # function, kernel bias is also applied
     h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
-    h_pool1 = max_pool_2x2(h_conv1) # 56 X 56
+    h_pool1 = tf.nn.l2_normalize(max_pool_2x2(h_conv1), [1, 2]) # 56 X 56
+    #h_pool1 = max_pool_2x2(h_conv1) # 56 X 56
     #---------------------------------------------------------------------------
     W_conv2 = weight_variable([5, 5, 32, 16])
     b_conv2 = bias_variable([16])
 
     h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-    h_pool2 = max_pool_2x2(h_conv2) # 28 x 28
+    h_pool2 = tf.nn.l2_normalize(max_pool_2x2(h_conv2), [1, 2]) # 28 x 28
+    #h_pool2 = max_pool_2x2(h_conv2) # 28 x 28
     #---------------------------------------------------------------------------
     W_conv3 = weight_variable([5, 5, 16, 8])
     b_conv3 = bias_variable([8])
 
     h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-    h_pool3 = max_pool_2x2(h_conv3) # 14 x 14
+    h_pool3 = tf.nn.l2_normalize(max_pool_2x2(h_conv3), [1, 2]) # 14 x 14
+    #h_pool3 = max_pool_2x2(h_conv3) # 14 x 14
     #---------------------------------------------------------------------------
-    W_conv4 = weight_variable([5, 5, 8, 8])
-    b_conv4 = bias_variable([8])
+    W_conv4 = weight_variable([5, 5, 8, 4])
+    b_conv4 = bias_variable([4])
 
     h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
-    h_pool4 = max_pool_2x2(h_conv4) # 7 x 7
+    h_pool4 = tf.nn.l2_normalize(max_pool_2x2(h_conv4), [1, 2]) # 7 x 7
+    #h_pool4 = max_pool_2x2(h_conv4)# 7 x 7
 
     hp4_width, hp4_height = 7, 7 #h_conv4.shape[1] / 2, h_conv4.shape[2] / 2
     # hp4_width, hp4_height = 32, 32
-    W_fc1 = weight_variable([hp4_width * hp4_height * 8, 1024])
+    W_fc1 = weight_variable([hp4_width * hp4_height * 4, 1024])
     b_fc1 = bias_variable([1024])
 
-    h_pool4_flat = tf.reshape(h_pool4, [-1, hp4_width * hp4_height * 8])
+    h_pool4_flat = tf.reshape(h_pool4, [-1, hp4_width * hp4_height * 4])
     h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
 
     keep_prob = tf.placeholder(tf.float32)
@@ -250,18 +254,18 @@ with tf.Session() as sess:
     test_wd = os.getcwd()
     os.chdir(old_cwd)
 
-    for i in range(40):
+    for i in range(2000):
       batch = training_set.next_batch(50)
       # batch = mnist.train.next_batch(50)
-      if i%10 == 0:
+      if i%100 == 0:
         train_accuracy = accuracy.eval(feed_dict={
             x:batch[0], y_: batch[1], keep_prob: 1.0})
         print("\nstep %d, training accuracy %g"%(i, train_accuracy))
 
-        with open("results", "a") as text_file:
-          text_file.write("Step %d Accuracy: %s\n" % (i, train_accuracy))
-          os.write(1, bytearray('.', encoding='utf8'))
-          train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+      with open("results", "a") as text_file:
+        text_file.write("Step %d Accuracy: %s\n" % (i, train_accuracy))
+        os.write(1, bytearray('.', encoding='utf8'))
+        train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
     save_layer('conv1', w_tensor=W_conv1, b_tensor=b_conv1)
     save_layer('conv1/conv2', w_tensor=W_conv2, b_tensor=b_conv2)
