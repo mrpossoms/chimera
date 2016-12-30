@@ -5,7 +5,7 @@
 
 class NgonMesh : public Mesh {
 public:
-  NgonMesh(int min, int max)
+  NgonMesh(int min, int max, range_t yaw, range_t pitch)
   {
     // NOOP
     range_t x = { .min = -2, .max = 2 };
@@ -16,6 +16,8 @@ public:
     add_parameter(y);
     add_parameter(z);
     add_parameter(vert_count);
+    add_parameter(yaw);
+    add_parameter(pitch);
   }
 
   const void* vertex_buffer()
@@ -54,7 +56,11 @@ public:
       randomf(parameter_ranges[2])
     );
 
-    mat4x4_translate(transform,
+    mat4x4 temp;
+    mat4x4_identity(transform);
+    mat4x4_rotate_Y(temp, transform, randomf(parameter_ranges[4]));
+    mat4x4_rotate_X(transform, temp, randomf(parameter_ranges[5]));
+    mat4x4_translate_in_place(transform,
       bounding_sphere.origin.x,
       bounding_sphere.origin.y,
       bounding_sphere.origin.z
