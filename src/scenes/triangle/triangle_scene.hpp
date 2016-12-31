@@ -22,7 +22,9 @@ const range_t ZERO = { 0, 0 };
 
 class TriangleScene : public Scene {
 public:
-  TriangleScene() : tri(3, 3, PI_8, PI_8), regular(4, 12, PI_2, PI_2)
+  TriangleScene() : tri(3, 3, PI_8, PI_8),
+                    regular(4, 12, PI_2, PI_2),
+                    bg_poly(4, 4, ZERO, ZERO)
   {
 
 #ifdef __APPLE__
@@ -56,10 +58,14 @@ public:
     regular.parameter_ranges[0].min = regular.parameter_ranges[1].max = 2;
     regular.parameter_ranges[2].min = 1;
     regular.parameter_ranges[2].max = 5;
+
+    bg_poly.parameter_ranges[0].min = bg_poly.parameter_ranges[1].min = 0;
+    bg_poly.parameter_ranges[0].min = bg_poly.parameter_ranges[1].max = 0;
+    bg_poly.parameter_ranges[2].min = bg_poly.parameter_ranges[2].max = 0.5;
+
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_MULTISAMPLE);
-    // glEnable(GL_LIGHTING);
-    // glEnable(GL_LIGHT0);
+    glShadeModel(GL_SMOOTH);
 
     // Chimera scene setup
     glViewport(0, 0, SAMPLE_WIDTH, SAMPLE_HEIGHT);
@@ -69,7 +75,7 @@ public:
     range_t one = { 0, 1 };
     range_t low = { 0.4, 0.6 };
     tri_noise = new UniformNoise(64, 64, one, one, one);
-    bg_noise = new UniformNoise(SAMPLE_WIDTH, SAMPLE_HEIGHT, one, one, one);
+    bg_noise = new UniformNoise(64, 64, one, one, one);
 
     if(VIS_OPTS.write_blob)
     {
@@ -125,30 +131,27 @@ public:
 
     for(int i = 3; i--;){
       range_t range = { min, max };
-      bg_noise->parameter_ranges[i] = range;
+      ((range_t*)bg_noise->parameters)[i] = range;
     }
 
-    bg_noise->permute();
-    bg_noise->render();
-    glDrawPixels(
-      bg_noise->get_width(),
-      bg_noise->get_height(),
-      GL_RGB, GL_UNSIGNED_BYTE,
-      (void*)bg_noise->data
-    );
     view->render();
-
     for(int i = 3; i--;){
       range_t range = { min, max };
       tri_noise->parameter_ranges[i] = range;
     }
 
+    bg_noise->permute();
+    bg_noise->render();
+    bg_poly.parameter_ranges[0].min = bg_poly.parameter_ranges[0].max = 0;
+    bg_poly.parameter_ranges[1].min = bg_poly.parameter_ranges[1].max = 0;
+    bg_poly.permute();
+    bg_poly.render();
+
+
     for(int i = 6 + random() % 4; i--;)
     {
       tri_noise->permute();
       tri_noise->render();
-      // bg_poly.permute();
-      // bg_poly.render();
 
       regular.parameter_ranges[0].min = -2;
       regular.parameter_ranges[1].max = 2;
@@ -256,7 +259,7 @@ private:
   GLFWwindow* win;
 #endif
   NgonMesh tri, regular;
-  PolyMesh bg_poly;
+  NgonMesh bg_poly;
   UniformNoise *tri_noise, *bg_noise;
   Viewer* view;
   bool in_view;

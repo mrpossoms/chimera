@@ -8,9 +8,9 @@ public:
   NgonMesh(int min, int max, range_t yaw, range_t pitch)
   {
     // NOOP
-    range_t x = { .min = -2, .max = 2 };
-    range_t y = { .min = -2, .max = 2 };
-    range_t z = { .min = 3, .max = 5 };
+    range_t x = { .min = -1, .max = 1 };
+    range_t y = { .min = -1, .max = 1 };
+    range_t z = { .min = 2, .max = 5 };
     range_t vert_count = { .min = (float)min, .max = (float)max };
     range_t line_thickness = { 0, 3 };
     add_parameter(x);
@@ -42,7 +42,6 @@ public:
       vertex_t v = {
         .a = Vec3(cos(i * t + theta), sin(i * t + theta), 0),
         .b = Vec3(cos(i * t) / 2.f + 0.5f, sin(i * t) / 2.f + 0.5f, 0),
-        .c = Vec3(0, 0, -1),
       };
 
       v.b *= texcoord_scale;
@@ -100,35 +99,15 @@ public:
     glPushMatrix();
     glMultMatrixf((const GLfloat*)transform);
 
-
-    int filled = random() % 3;
-    if(filled)
+    glBegin(GL_TRIANGLE_FAN);
+    for(int i = vertices.size(); i--;)
     {
-      glBegin(GL_TRIANGLE_FAN);
-      for(int i = vertices.size(); i--;)
-      {
-        // glColor3f(1, 0, 0);
-        glTexCoord2f(vertices[i].b.x, vertices[i].b.y);
-        glNormal3f(vertices[i].c.x, vertices[i].c.y, vertices[i].c.z);
-        glVertex2f(vertices[i].a.x, vertices[i].a.y);
-      }
-      glEnd();
+      const range_t r = { 0.25, 1 };
+      glColor3f(randomf(r), randomf(r), randomf(r));
+      glTexCoord2f(vertices[i].b.x, vertices[i].b.y);
+      glVertex2f(vertices[i].a.x, vertices[i].a.y);
     }
-
-    int line_thickness = (int)randomf(parameter_ranges[6]) + !filled;
-    if(line_thickness)
-    {
-      glLineWidth(line_thickness);
-      glBegin(GL_LINE_STRIP);
-      glColor3f(randomf(), randomf(), randomf());
-      for(int i = vertices.size() + 1; i--;)
-      {
-        int j = i % vertices.size();
-        glNormal3f(vertices[j].c.x, vertices[j].c.y, vertices[j].c.z);
-        glVertex2f(vertices[j].a.x, vertices[j].a.y);
-      }
-      glEnd();
-    }
+    glEnd();
 
     glPopMatrix();
   }
