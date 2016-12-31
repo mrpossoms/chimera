@@ -57,7 +57,7 @@ static inline float randomf()
   return (random() % m) / s;
 }
 
-static inline float randomf(range_t& range)
+static inline float randomf(const range_t& range)
 {
   float s = randomf();
   return (s * (range.max - range.min)) + range.min;

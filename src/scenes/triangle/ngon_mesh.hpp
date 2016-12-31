@@ -12,12 +12,14 @@ public:
     range_t y = { .min = -2, .max = 2 };
     range_t z = { .min = 3, .max = 5 };
     range_t vert_count = { .min = (float)min, .max = (float)max };
+    range_t line_thickness = { 0, 3 };
     add_parameter(x);
     add_parameter(y);
     add_parameter(z);
     add_parameter(vert_count);
     add_parameter(yaw);
     add_parameter(pitch);
+    add_parameter(line_thickness);
   }
 
   const void* vertex_buffer()
@@ -98,17 +100,36 @@ public:
     glPushMatrix();
     glMultMatrixf((const GLfloat*)transform);
 
-    glBegin(GL_TRIANGLE_FAN);
 
-    for(int i = vertices.size(); i--;)
+    int filled = random() % 3;
+    if(filled)
     {
-      // glColor3f(1, 0, 0);
-      glTexCoord2f(vertices[i].b.x, vertices[i].b.y);
-      glNormal3f(vertices[i].c.x, vertices[i].c.y, vertices[i].c.z);
-      glVertex2f(vertices[i].a.x, vertices[i].a.y);
+      glBegin(GL_TRIANGLE_FAN);
+      for(int i = vertices.size(); i--;)
+      {
+        // glColor3f(1, 0, 0);
+        glTexCoord2f(vertices[i].b.x, vertices[i].b.y);
+        glNormal3f(vertices[i].c.x, vertices[i].c.y, vertices[i].c.z);
+        glVertex2f(vertices[i].a.x, vertices[i].a.y);
+      }
+      glEnd();
     }
 
-    glEnd();
+    int line_thickness = (int)randomf(parameter_ranges[6]) + !filled;
+    if(line_thickness)
+    {
+      glLineWidth(line_thickness);
+      glBegin(GL_LINE_STRIP);
+      glColor3f(randomf(), randomf(), randomf());
+      for(int i = vertices.size() + 1; i--;)
+      {
+        int j = i % vertices.size();
+        glNormal3f(vertices[j].c.x, vertices[j].c.y, vertices[j].c.z);
+        glVertex2f(vertices[j].a.x, vertices[j].a.y);
+      }
+      glEnd();
+    }
+
     glPopMatrix();
   }
 private:

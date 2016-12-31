@@ -17,11 +17,12 @@
 #define SAMPLE_HEIGHT 112
 
 const range_t PI_2 = { -M_PI / 4.f, M_PI / 4.f };
+const range_t PI_8 = { -M_PI / 16.f, M_PI / 16.f };
 const range_t ZERO = { 0, 0 };
 
 class TriangleScene : public Scene {
 public:
-  TriangleScene() : tri(3, 3, ZERO, ZERO), regular(4, 12, PI_2, PI_2)
+  TriangleScene() : tri(3, 3, PI_8, PI_8), regular(4, 12, PI_2, PI_2)
   {
 
 #ifdef __APPLE__
@@ -33,6 +34,7 @@ public:
     }
 
     glfwWindowHint(GLFW_DOUBLEBUFFER, GL_FALSE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
     win = glfwCreateWindow(SAMPLE_WIDTH >> 1, SAMPLE_HEIGHT >> 1, "Chimera", NULL, NULL);
 
     if(!win)
@@ -52,9 +54,10 @@ public:
 
     regular.parameter_ranges[0].min = regular.parameter_ranges[1].min = -2;
     regular.parameter_ranges[0].min = regular.parameter_ranges[1].max = 2;
-    regular.parameter_ranges[2].min = 2;
-    regular.parameter_ranges[2].max = 3;
+    regular.parameter_ranges[2].min = 1;
+    regular.parameter_ranges[2].max = 5;
     glEnable(GL_TEXTURE_2D);
+    glEnable(GL_MULTISAMPLE);
     // glEnable(GL_LIGHTING);
     // glEnable(GL_LIGHT0);
 
@@ -65,7 +68,7 @@ public:
 
     range_t one = { 0, 1 };
     range_t low = { 0.4, 0.6 };
-    tri_noise = new UniformNoise(32, 32, one, one, one);
+    tri_noise = new UniformNoise(64, 64, one, one, one);
     bg_noise = new UniformNoise(SAMPLE_WIDTH, SAMPLE_HEIGHT, one, one, one);
 
     if(VIS_OPTS.write_blob)
@@ -111,12 +114,13 @@ public:
 
     tri.permute();
 
-    float contrast_split = randomf();
+    const range_t one = { -1, 1 };
+    float contrast_split = (randomf(one) * 0.1) + 0.5;
     float min = contrast_split, max = 1;
 
     if(contrast_split < 0.5)
     {
-      min = 0, max = contrast_split;
+      min = 0.1, max = contrast_split;
     }
 
     for(int i = 3; i--;){
@@ -139,7 +143,7 @@ public:
       tri_noise->parameter_ranges[i] = range;
     }
 
-    for(int i = 2 + random() % 10; i--;)
+    for(int i = 6 + random() % 4; i--;)
     {
       tri_noise->permute();
       tri_noise->render();
