@@ -49,7 +49,8 @@ public:
 #elif __linux__
     setenv ("DISPLAY", ":0", 0);
     glutInit(&ARGC, (char**)ARGV);
-    glutInitDisplayMode(GLUT_RGBA);
+    glutSetOption(GLUT_MULTISAMPLE, 4);
+    glutInitDisplayMode(GLUT_RGB | GLUT_MULTISAMPLE);
     glutInitWindowSize(SAMPLE_WIDTH, SAMPLE_WIDTH);
     glutCreateWindow("Chimera");
 #endif

@@ -43,14 +43,14 @@ class FileTrainingSet():
             images += [tf.image.resize_images([image], [112, 112]).eval().flatten() / 255.0]
 
             if name_and_label[1] is '1':
-                labels += [np.array([1.0, 0.0])]
+                labels += [1.0]
             else:
-                labels += [np.array([0.0, 1.0])]
+                labels += [-1.0]
 
         # coord.request_stop()
         # coord.join(threads)
 
-        return np.asarray(images), np.asarray(labels).reshape(len(labels), 2)
+        return np.asarray(images), np.asarray(labels).reshape([len(labels), 1])
 
 
 class BlobTrainingSet():
@@ -79,16 +79,16 @@ class BlobTrainingSet():
             images += [ np.frombuffer(buf, dtype=np.uint8).reshape(112**2) / 255.0 ]
             # Image.frombytes('L', (128, 128), buf).show()
             if tag == 1:
-                labels += [np.array([1.0, 0.0])]
+                labels += [1.0]
             else:
-                labels += [np.array([0.0, 1.0])]
+                labels += [-1.0]
 
         self.index += size
         # coord.request_stop()
         # coord.join(threads)
 
-        return np.asarray(images), np.asarray(labels).reshape(len(labels), 2)
-
+        return np.asarray(images), np.asarray(labels).reshape([len(labels), 1])
+        #return np.asarray(images), np.asarray(labels)
 
 def weight_variable(shape):
   initial = tf.truncated_normal(shape, stddev=0.1)
@@ -96,7 +96,8 @@ def weight_variable(shape):
 
 
 def bias_variable(shape):
-  initial = tf.constant(0.1, shape=shape)
+  #initial = tf.constant(0.1, shape=shape)
+  initial = tf.truncated_normal(shape, stddev=0.1)
   return tf.Variable(initial)
 
 
@@ -183,9 +184,33 @@ def save_activation_map(path, tensor, name):
         save_image(path + '/' + str(filter_idx), act_map.reshape(act_map.shape[:2]))
         filter_idx += 1
 
+def test(y_conv, y_, accuracy, h_pool4):
+    final_acc = 0
+    test_set.reset()
+    for i in range(13):
+        os.chdir(test_wd)
+        batch = test_set.next_batch(1) #, decoder=tf.image.decode_jpeg)
+        value = y_conv.eval(feed_dict={x: batch[0], keep_prob: 1.0})
+        acc = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
+        print("test accuracy %g value %f" % (acc, value))
+        final_acc += acc
+
+        os.chdir(old_cwd)
+        path = "activations/%d" % i
+        try:
+            os.makedirs(path)
+        except FileExistsError:
+            pass
+
+        save_image(path + '/input', batch[0].reshape([112, 112]))
+        save_activation_map(path, h_pool4.eval(feed_dict={x: batch[0]}), "Test%d" % i)
+
+    print("Accuracy %f" % (final_acc / 13.0))
+
+
 with tf.Session() as sess:
     width, height = 112, 112
-    classes = 2
+    classes = 1
 
     # width, height = 28, 28
     # classes = 10
@@ -197,61 +222,87 @@ with tf.Session() as sess:
     # that this dimension will be equal to that of the number of training
     # samples that are part of the selected batch
     x_image = tf.reshape(x, [-1,width,height,1])
-    W_conv1 = weight_variable([5, 5, 1, 32]) # 5 x 5 x 1 kernels 32 deep?
-    b_conv1 = bias_variable([32]) # A bias for each kernel neuron
+    s_conv1 = [5, 5, 1, 16]
+    W_conv1 = weight_variable(s_conv1) # 5 x 5 x 1 kernels 32 deep?
+    b_conv1 = bias_variable([s_conv1[3]]) # A bias for each kernel neuron
 
     # slides filter across image, run through the ReLU activation
     # function, kernel bias is also applied
     h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
+    #h_pool1 = tf.nn.l2_normalize((h_conv1), [1, 2]) # 56 X 56
     h_pool1 = tf.nn.l2_normalize(max_pool_2x2(h_conv1), [1, 2]) # 56 X 56
     #h_pool1 = max_pool_2x2(h_conv1) # 56 X 56
     #---------------------------------------------------------------------------
-    W_conv2 = weight_variable([5, 5, 32, 16])
-    b_conv2 = bias_variable([16])
+    s_conv2 = [5, 5, 16, 32]
+    W_conv2 = weight_variable(s_conv2)
+    b_conv2 = bias_variable([s_conv2[3]])
 
     h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
+    #h_pool2 = tf.nn.l2_normalize((h_conv2), [1, 2]) # 28 x 28
     h_pool2 = tf.nn.l2_normalize(max_pool_2x2(h_conv2), [1, 2]) # 28 x 28
     #h_pool2 = max_pool_2x2(h_conv2) # 28 x 28
     #---------------------------------------------------------------------------
-    W_conv3 = weight_variable([5, 5, 16, 8])
-    b_conv3 = bias_variable([8])
+    s_conv3 = [5, 5, 32, 32]
+    W_conv3 = weight_variable(s_conv3)
+    b_conv3 = bias_variable([s_conv3[3]])
 
     h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
+    #h_pool3 = tf.nn.l2_normalize((h_conv3), [1, 2]) # 14 x 14
     h_pool3 = tf.nn.l2_normalize(max_pool_2x2(h_conv3), [1, 2]) # 14 x 14
     #h_pool3 = max_pool_2x2(h_conv3) # 14 x 14
     #---------------------------------------------------------------------------
-    W_conv4 = weight_variable([5, 5, 8, 4])
-    b_conv4 = bias_variable([4])
+    s_conv4 = [5, 5, 32, 32]
+    W_conv4 = weight_variable(s_conv4)
+    b_conv4 = bias_variable([s_conv4[3]])
 
     h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
-
-    h_pool4 = tf.nn.l2_normalize(max_pool_2x2(h_conv4), [1, 2]) # 7 x 7
+    h_pool4 = tf.nn.l2_normalize((h_conv4), [1, 2]) # 7 x 7
+    #h_pool4 = tf.nn.l2_normalize(max_pool_2x2(h_conv4), [1, 2]) # 7 x 7
     #h_pool4 = max_pool_2x2(h_conv4)# 7 x 7
-
-    hp4_width, hp4_height = 7, 7 #h_conv4.shape[1] / 2, h_conv4.shape[2] / 2
-    # hp4_width, hp4_height = 32, 32
-    W_fc1 = weight_variable([hp4_width * hp4_height * 4, 1024])
-    b_fc1 = bias_variable([1024])
-
-    h_pool4_flat = tf.reshape(h_pool4, [-1, hp4_width * hp4_height * 4])
-    h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
+    #h_pool4 = h_conv4# 7 x 7
 
     keep_prob = tf.placeholder(tf.float32)
+    hp4_width, hp4_height = 14, 14 #h_conv4.shape[1] / 2, h_conv4.shape[2] / 2
+    # hp4_width, hp4_height = 32, 32
+    W_fc1 = weight_variable([hp4_width * hp4_height * s_conv4[3], 2048])
+    b_fc1 = bias_variable([2048])
+
+    h_pool4_flat = tf.reshape(h_pool4, [-1, hp4_width * hp4_height * s_conv4[3]])
+    h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
     h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
-    W_fc2 = weight_variable([1024, 512])
-    b_fc2 = bias_variable([512])
+    W_fc2 = weight_variable([2048, 2048])
+    b_fc2 = bias_variable([2048])
     h_fc2 = tf.nn.relu(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
     h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob)
 
-    W_fc3 = weight_variable([512, classes])
-    b_fc3 = bias_variable([classes])
+    #W_fc2_1 = weight_variable([2048, 2048])
+    #b_fc2_1 = bias_variable([2048])
+    #h_fc2_1 = tf.nn.relu(tf.matmul(h_fc2_drop, W_fc2_1) + b_fc2_1)
+    #h_fc2_1_drop = tf.nn.dropout(h_fc2_1, keep_prob)
 
-    y_conv = tf.matmul(h_fc2_drop, W_fc3) + b_fc3
 
-    cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y_conv, y_))
-    train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
-    correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
+    W_fc3 = weight_variable([2048, 1024])
+    b_fc3 = bias_variable([1024])
+    h_fc3 = tf.nn.relu(tf.matmul(h_fc2_drop, W_fc3) + b_fc3)
+    h_fc3_drop = tf.nn.dropout(h_fc3, keep_prob)
+
+
+    W_fc4 = weight_variable([1024, classes])
+    b_fc4 = bias_variable([classes])
+
+    y_conv = tf.matmul(h_fc3_drop, W_fc4) + b_fc4
+
+    #cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y_conv, y_))
+    #ylna+(1−y)ln(1−a)
+    
+    #cost = tf.reduce_mean(-y_ * tf.log(y_conv) + (1 - y_) * tf.log(1 - y_conv))
+    #cost = tf.reduce_mean(-(y_ * tf.log(y_conv)))
+    exp_cost = tf.reduce_mean(tf.pow(y_conv - y_, 2))
+    train_step = tf.train.AdamOptimizer(1e-4).minimize(exp_cost)
+    #train_step = tf.train.GradientDescentOptimizer(0.5).minimize(exp_cost)
+    correct_prediction = tf.equal(y_conv / tf.abs(y_conv), y_)
+    #correct_prediction = tf.less(exp_cost, 1)
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
     sess.run(tf.global_variables_initializer())
@@ -276,18 +327,22 @@ with tf.Session() as sess:
     test_wd = os.getcwd()
     os.chdir(old_cwd)
 
-    for i in range(1):
+    for i in range(20000):
       batch = training_set.next_batch(50)
-      # batch = mnist.train.next_batch(50)
-      if i%10 == 0:
+      train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: .5})
+      os.write(1, bytearray('.', encoding='utf8'))
+
+      if i%500 == 0:
+          test(y_conv, y_, accuracy, h_pool4)
+
+      if i%100 == 0:
         train_accuracy = accuracy.eval(feed_dict={
             x:batch[0], y_: batch[1], keep_prob: 1.0})
+
         print("\nstep %d, training accuracy %g"%(i, train_accuracy))
 
-      with open("results", "a") as text_file:
-        text_file.write("Step %d Accuracy: %s\n" % (i, train_accuracy))
-        os.write(1, bytearray('.', encoding='utf8'))
-        train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+        with open("results", "a") as text_file:
+          text_file.write("Step %d Accuracy: %s\n" % (i, train_accuracy))
 
     save_layer('conv1', w_tensor=W_conv1, b_tensor=b_conv1)
     save_layer('conv1/conv2', w_tensor=W_conv2, b_tensor=b_conv2)
@@ -295,21 +350,5 @@ with tf.Session() as sess:
     save_layer('conv1/conv2/conv3/conv4', w_tensor=W_conv4, b_tensor=b_conv4)
     save_layer('conv1/conv2/conv3/conv4/fc1', w_tensor=W_fc1, b_tensor=b_fc1)
     save_layer('conv1/conv2/conv3/conv4/fc1/fc2', w_tensor=W_fc2, b_tensor=b_fc2)
-
-    for i in range(13):
-        os.chdir(test_wd)
-        batch = test_set.next_batch(1) #, decoder=tf.image.decode_jpeg)
-        print("test accuracy %g"%accuracy.eval(feed_dict={
-            x: batch[0], y_: batch[1], keep_prob: 1.0}))
-
-        os.chdir(old_cwd)
-        path = "activations/%d" % i
-        try:
-            os.makedirs(path)
-        except FileExistsError:
-            pass
-
-        save_image(path + '/input', batch[0].reshape([112, 112]))
-        save_activation_map(path, h_pool4.eval(feed_dict={x: batch[0]}), "Test%d" % i)
 
     os.chdir(old_cwd)
