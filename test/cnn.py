@@ -96,10 +96,13 @@ def weight_variable(shape):
 
 
 def bias_variable(shape):
-  #initial = tf.constant(0.1, shape=shape)
-  initial = tf.truncated_normal(shape, stddev=0.1)
+  initial = tf.constant(0.1, shape=shape)
+  #initial = tf.truncated_normal(shape, stddev=0.1)
   return tf.Variable(initial)
 
+def bias_variable_rand(shape):
+  initial = tf.truncated_normal(shape, stddev=0.1)
+  return tf.Variable(initial)
 
 def conv2d(x, W):
     # strides
@@ -118,6 +121,8 @@ def max_pool_2x2(x):
   return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
                         strides=[1, 2, 2, 1], padding='SAME')
 
+def max_pool_4x4(x):
+    return tf.nn.max_pool(x, ksize=[1, 4, 4, 1], strides=[1, 4, 4, 1], padding='SAME')
 
 def shape_str(np_mat):
     shape = ""
@@ -187,7 +192,7 @@ def save_activation_map(path, tensor, name):
 def test(y_conv, y_, accuracy, h_pool4):
     final_acc = 0
     test_set.reset()
-    for i in range(13):
+    for i in range(16):
         os.chdir(test_wd)
         batch = test_set.next_batch(1) #, decoder=tf.image.decode_jpeg)
         value = y_conv.eval(feed_dict={x: batch[0], keep_prob: 1.0})
@@ -222,7 +227,7 @@ with tf.Session() as sess:
     # that this dimension will be equal to that of the number of training
     # samples that are part of the selected batch
     x_image = tf.reshape(x, [-1,width,height,1])
-    s_conv1 = [5, 5, 1, 16]
+    s_conv1 = [5, 5, 1, 8]
     W_conv1 = weight_variable(s_conv1) # 5 x 5 x 1 kernels 32 deep?
     b_conv1 = bias_variable([s_conv1[3]]) # A bias for each kernel neuron
 
@@ -230,68 +235,40 @@ with tf.Session() as sess:
     # function, kernel bias is also applied
     h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
     #h_pool1 = tf.nn.l2_normalize((h_conv1), [1, 2]) # 56 X 56
-    h_pool1 = tf.nn.l2_normalize(max_pool_2x2(h_conv1), [1, 2]) # 56 X 56
-    #h_pool1 = max_pool_2x2(h_conv1) # 56 X 56
-    #---------------------------------------------------------------------------
-    s_conv2 = [5, 5, 16, 32]
+    #h_pool1 = tf.nn.l2_normalize(max_pool_2x2(h_conv1), [1, 2]) # 56 X 56
+    h_pool1 = max_pool_4x4(h_conv1) # 56 X 56
+    ##---------------------------------------------------------------------------
+    s_conv2 = [5, 5, 8, 4]
     W_conv2 = weight_variable(s_conv2)
     b_conv2 = bias_variable([s_conv2[3]])
 
     h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
+    h_pool2 = max_pool_2x2(h_conv2)
     #h_pool2 = tf.nn.l2_normalize((h_conv2), [1, 2]) # 28 x 28
-    h_pool2 = tf.nn.l2_normalize(max_pool_2x2(h_conv2), [1, 2]) # 28 x 28
-    #h_pool2 = max_pool_2x2(h_conv2) # 28 x 28
+    #h_pool2 = tf.nn.l2_normalize(max_pool_2x2(h_conv2), [1, 2]) # 28 x 28
     #---------------------------------------------------------------------------
-    s_conv3 = [5, 5, 32, 32]
-    W_conv3 = weight_variable(s_conv3)
-    b_conv3 = bias_variable([s_conv3[3]])
+    s_conv_f = [5, 5, 4, 4]
+    W_conv_f = weight_variable(s_conv_f)
+    b_conv_f = bias_variable([s_conv_f[3]])
 
-    h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-    #h_pool3 = tf.nn.l2_normalize((h_conv3), [1, 2]) # 14 x 14
-    h_pool3 = tf.nn.l2_normalize(max_pool_2x2(h_conv3), [1, 2]) # 14 x 14
-    #h_pool3 = max_pool_2x2(h_conv3) # 14 x 14
+    h_conv_f = tf.nn.relu(conv2d(h_pool2, W_conv_f) + b_conv_f)
+    #h_pool2 = tf.nn.l2_normalize((h_conv2), [1, 2]) # 28 x 28
+    #h_pool_f = tf.nn.l2_normalize(max_pool_2x2(h_conv_f), [1, 2]) # 28 x 28
+    h_pool_f = max_pool_2x2(h_conv_f) # 28 x 28
     #---------------------------------------------------------------------------
-    s_conv4 = [5, 5, 32, 32]
-    W_conv4 = weight_variable(s_conv4)
-    b_conv4 = bias_variable([s_conv4[3]])
-
-    h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
-    h_pool4 = tf.nn.l2_normalize((h_conv4), [1, 2]) # 7 x 7
-    #h_pool4 = tf.nn.l2_normalize(max_pool_2x2(h_conv4), [1, 2]) # 7 x 7
-    #h_pool4 = max_pool_2x2(h_conv4)# 7 x 7
-    #h_pool4 = h_conv4# 7 x 7
-
     keep_prob = tf.placeholder(tf.float32)
-    hp4_width, hp4_height = 14, 14 #h_conv4.shape[1] / 2, h_conv4.shape[2] / 2
+    hp4_width, hp4_height = 7, 7 #h_conv4.shape[1] / 2, h_conv4.shape[2] / 2
     # hp4_width, hp4_height = 32, 32
-    W_fc1 = weight_variable([hp4_width * hp4_height * s_conv4[3], 2048])
-    b_fc1 = bias_variable([2048])
+    h_pool_f_flat = tf.reshape(h_pool_f, [-1, hp4_width * hp4_height * s_conv_f[3]])
+    W_fc1 = weight_variable([hp4_width * hp4_height * s_conv_f[3], 2048])
+    b_fc1 = bias_variable_rand([2048])
+    #y_conv = tf.nn.relu(tf.matmul(h_pool_f_flat, W_fc1) + b_fc1)
+    h_fc1 = tf.nn.dropout(tf.nn.relu(tf.matmul(h_pool_f_flat, W_fc1) + b_fc1), keep_prob)
 
-    h_pool4_flat = tf.reshape(h_pool4, [-1, hp4_width * hp4_height * s_conv4[3]])
-    h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
-    h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
+    W_fc4 = weight_variable([2048, classes])
+    b_fc4 = bias_variable_rand([classes])
 
-    W_fc2 = weight_variable([2048, 2048])
-    b_fc2 = bias_variable([2048])
-    h_fc2 = tf.nn.relu(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
-    h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob)
-
-    #W_fc2_1 = weight_variable([2048, 2048])
-    #b_fc2_1 = bias_variable([2048])
-    #h_fc2_1 = tf.nn.relu(tf.matmul(h_fc2_drop, W_fc2_1) + b_fc2_1)
-    #h_fc2_1_drop = tf.nn.dropout(h_fc2_1, keep_prob)
-
-
-    W_fc3 = weight_variable([2048, 1024])
-    b_fc3 = bias_variable([1024])
-    h_fc3 = tf.nn.relu(tf.matmul(h_fc2_drop, W_fc3) + b_fc3)
-    h_fc3_drop = tf.nn.dropout(h_fc3, keep_prob)
-
-
-    W_fc4 = weight_variable([1024, classes])
-    b_fc4 = bias_variable([classes])
-
-    y_conv = tf.matmul(h_fc3_drop, W_fc4) + b_fc4
+    y_conv = tf.matmul(h_fc1, W_fc4) + b_fc4
 
     #cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y_conv, y_))
     #ylna+(1−y)ln(1−a)
@@ -301,24 +278,25 @@ with tf.Session() as sess:
     exp_cost = tf.reduce_mean(tf.pow(y_conv - y_, 2))
     train_step = tf.train.AdamOptimizer(1e-4).minimize(exp_cost)
     #train_step = tf.train.GradientDescentOptimizer(0.5).minimize(exp_cost)
-    correct_prediction = tf.equal(y_conv / tf.abs(y_conv), y_)
+    correct_prediction = tf.equal(y_conv / tf.abs(y_conv), y_ / tf.abs(y_))
     #correct_prediction = tf.less(exp_cost, 1)
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
     sess.run(tf.global_variables_initializer())
 
     try:
-        W_conv1, b_conv1 = load_layer('conv1', w_tensor=W_conv1, b_tensor=b_conv1)
-        W_conv2, b_conv2 = load_layer('conv1/conv2', w_tensor=W_conv2, b_tensor=b_conv2)
-        W_conv3, b_conv3 = load_layer('conv1/conv2/conv3', w_tensor=W_conv3, b_tensor=b_conv3)
-        W_conv4, b_conv4 = load_layer('conv1/conv2/conv3/conv4', w_tensor=W_conv4, b_tensor=b_conv4)
-        W_fc1, b_fc1 = load_layer('conv1/conv2/conv3/conv4/fc1', w_tensor=W_fc1, b_tensor=b_fc1)
-        W_fc2, b_fc2 = load_layer('conv1/conv2/conv3/conv4/fc1/fc2', w_tensor=W_fc2, b_tensor=b_fc2)
+        pass
+        #W_conv1, b_conv1 = load_layer('conv1', w_tensor=W_conv1, b_tensor=b_conv1)
+        #W_conv2, b_conv2 = load_layer('conv1/conv2', w_tensor=W_conv2, b_tensor=b_conv2)
+        #W_conv3, b_conv3 = load_layer('conv1/conv2/conv3', w_tensor=W_conv3, b_tensor=b_conv3)
+        #W_conv4, b_conv4 = load_layer('conv1/conv2/conv3/conv4', w_tensor=W_conv4, b_tensor=b_conv4)
+        #W_fc1, b_fc1 = load_layer('conv1/conv2/conv3/conv4/fc1', w_tensor=W_fc1, b_tensor=b_fc1)
+        #W_fc2, b_fc2 = load_layer('conv1/conv2/conv3/conv4/fc1/fc2', w_tensor=W_fc2, b_tensor=b_fc2)
     except:
         print('Not loaded')
 
     print('-----------------')
-    print(b_fc2.eval())
+    #print(b_fc2.eval())
 
     print("Building training set...")
     training_set = BlobTrainingSet("../data/training_blob")
@@ -327,13 +305,13 @@ with tf.Session() as sess:
     test_wd = os.getcwd()
     os.chdir(old_cwd)
 
-    for i in range(20000):
+    for i in range(2000):
       batch = training_set.next_batch(50)
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: .5})
       os.write(1, bytearray('.', encoding='utf8'))
 
       if i%500 == 0:
-          test(y_conv, y_, accuracy, h_pool4)
+          test(y_conv, y_, accuracy, h_pool_f)
 
       if i%100 == 0:
         train_accuracy = accuracy.eval(feed_dict={
@@ -344,11 +322,12 @@ with tf.Session() as sess:
         with open("results", "a") as text_file:
           text_file.write("Step %d Accuracy: %s\n" % (i, train_accuracy))
 
-    save_layer('conv1', w_tensor=W_conv1, b_tensor=b_conv1)
-    save_layer('conv1/conv2', w_tensor=W_conv2, b_tensor=b_conv2)
-    save_layer('conv1/conv2/conv3', w_tensor=W_conv3, b_tensor=b_conv3)
-    save_layer('conv1/conv2/conv3/conv4', w_tensor=W_conv4, b_tensor=b_conv4)
-    save_layer('conv1/conv2/conv3/conv4/fc1', w_tensor=W_fc1, b_tensor=b_fc1)
-    save_layer('conv1/conv2/conv3/conv4/fc1/fc2', w_tensor=W_fc2, b_tensor=b_fc2)
+    test(y_conv, y_, accuracy, h_pool_f)
+    #save_layer('conv1', w_tensor=W_conv1, b_tensor=b_conv1)
+    #save_layer('conv1/conv2', w_tensor=W_conv2, b_tensor=b_conv2)
+    #save_layer('conv1/conv2/conv3', w_tensor=W_conv3, b_tensor=b_conv3)
+    #save_layer('conv1/conv2/conv3/conv4', w_tensor=W_conv4, b_tensor=b_conv4)
+    #save_layer('conv1/conv2/conv3/conv4/fc1', w_tensor=W_fc1, b_tensor=b_fc1)
+    #save_layer('conv1/conv2/conv3/conv4/fc1/fc2', w_tensor=W_fc2, b_tensor=b_fc2)
 
     os.chdir(old_cwd)

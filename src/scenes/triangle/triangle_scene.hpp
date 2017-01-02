@@ -51,7 +51,7 @@ public:
     glutInit(&ARGC, (char**)ARGV);
     glutSetOption(GLUT_MULTISAMPLE, 4);
     glutInitDisplayMode(GLUT_RGB | GLUT_MULTISAMPLE);
-    glutInitWindowSize(SAMPLE_WIDTH, SAMPLE_WIDTH);
+    glutInitWindowSize(128, 128);
     glutCreateWindow("Chimera");
 #endif
 
@@ -69,7 +69,7 @@ public:
     glShadeModel(GL_SMOOTH);
 
     // Chimera scene setup
-    glViewport(0, 0, SAMPLE_WIDTH, SAMPLE_HEIGHT);
+    glViewport(0, 0, SAMPLE_WIDTH + 2, SAMPLE_HEIGHT + 2);
     view = new Viewer(SAMPLE_WIDTH, SAMPLE_HEIGHT);
     view->view.look = Vec3(0, 0, 1);
 
@@ -141,8 +141,8 @@ public:
       tri_noise->parameter_ranges[i] = range;
     }
 
-    bg_noise->permute();
-    bg_noise->render();
+    tri_noise->permute();
+    tri_noise->render();
     bg_poly.parameter_ranges[0].min = bg_poly.parameter_ranges[0].max = 0;
     bg_poly.parameter_ranges[1].min = bg_poly.parameter_ranges[1].max = 0;
     bg_poly.permute();
@@ -160,23 +160,28 @@ public:
       regular.render();
     }
 
+    min = 0, max = contrast_split;
+    if(contrast_split < 0.5)
+    {
+      min = contrast_split, max = 1;
+    }
+
+    for(int i = 3; i--;)
+    {
+      range_t range = { min, max };
+      tri_noise->parameter_ranges[i] = range;
+    }
+
+    tri_noise->permute();
+    tri_noise->render();
+ 
     if(in_view)
     {
-      min = 0, max = contrast_split;
-      if(contrast_split < 0.5)
-      {
-        min = contrast_split, max = 1;
-      }
-
-      for(int i = 3; i--;)
-      {
-        range_t range = { min, max };
-        tri_noise->parameter_ranges[i] = range;
-      }
-
-      tri_noise->permute();
-      tri_noise->render();
       tri.render();
+    }
+    else
+    {
+      regular.render();
     }
 
     glFinish();
@@ -198,7 +203,7 @@ public:
     void (*png_encoder)(const char*, int, int, const void*);
 
     glReadPixels(
-      0, 0,
+      1, 1,
       view->width, view->height,
       GL_RGB, GL_UNSIGNED_BYTE,
       (void*)color_buffer
