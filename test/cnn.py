@@ -92,7 +92,10 @@ def generate_layer(last, genotype):
     last_shape, last_layer, last_genotype = last
     last_is_conv = not (last_genotype & 0x01)
 
-    is_conv = not (genotype & 0x01) and last_is_conv is True
+    if last_is_conv:
+        genotype &= ~0x01
+
+    is_conv = not (genotype & 0x01)
     genes = genotype >> 1
     shape = last_shape.copy()
     input = last_layer
@@ -103,6 +106,7 @@ def generate_layer(last, genotype):
         normalize = bool((genes >> 5) & 0x01)
         pooling = bool(genes >> 6)
 
+        print("106:", shape)
         shape[2] = depth
         weights = weight_variable([side, side, last_shape[2], shape[2]])
         biases = bias_variable([depth])
@@ -116,7 +120,7 @@ def generate_layer(last, genotype):
             shape[0] >>= 1
             shape[1] >>= 1
 
-        if len(shape) is not 3:
+        if len(shape) < 3:
             raise LookupError
 
         return shape, layer, genotype
@@ -128,6 +132,7 @@ def generate_layer(last, genotype):
 
         if last_is_conv:
             last_neurons = np.prod(last_shape)
+            print("131:", last_shape, last_neurons)
             input = tf.reshape(input, [-1, last_neurons])
 
         shape = [last_neurons, neurons]
@@ -181,7 +186,7 @@ while True:
             last_hl_neurons = last[0][1]
             if len(last[0]) > 2:
                 last_hl_neurons = np.prod(last[0])
-
+            print("190:", last[0], last_hl_neurons)
             h_pool_f_flat = tf.reshape(last[1], [-1, last_hl_neurons])
 
             W_fc1 = weight_variable([last_hl_neurons, classes])
@@ -199,7 +204,7 @@ while True:
             os.chdir(old_cwd)
 
             for i in range(100):
-                batch = training_set.next_batch(50)
+                batch = training_set.next_batch(10)
                 train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: .5})
                 os.write(1, bytearray('.', encoding='utf8'))
 
