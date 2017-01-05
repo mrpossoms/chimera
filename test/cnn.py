@@ -35,7 +35,8 @@ def test(y_conv, y_, accuracy, h_pool4):
         if h_pool4 is not None:
             save_activation_map(path, h_pool4.eval(feed_dict={x: batch[0]}), "Test%d" % i)
 
-    print("Accuracy %f" % (final_acc / 13.0))
+    print("Accuracy %f" % (final_acc / 14.0))
+    return final_acc / 14.0
 
 
 def breed(left, right):
@@ -147,14 +148,14 @@ genome = [0x9A, 0x92, 0x92, 0x77]
 
 starters = [genome]
 
-for _ in range(10):
-    starters += [random_genome(4)]
+# for _ in range(10):
+#     starters += [random_genome(4)]
 
 training_set = BlobTrainingSet("../data/training_blob")
 test_set = FileTrainingSet("../data/test")
 
 while True:
-    population = populate(starters)
+    population = populate(starters, max=20)
     evaluations = []
 
     for candidate in population:
@@ -208,16 +209,17 @@ while True:
                 train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: .5})
                 os.write(1, bytearray('.', encoding='utf8'))
 
-                if i % 100 == 0:
-                    train_accuracy = accuracy.eval(feed_dict={
-                        x: batch[0], y_: batch[1], keep_prob: 1.0})
+            score = test(y_conv, y_, accuracy, None)
 
-                    print("\nstep %d, training accuracy %g" % (i, train_accuracy))
-
-                    with open("results", "a") as text_file:
-                        text_file.write("Step %d Accuracy: %s\n" % (i, train_accuracy))
-
-            test(y_conv, y_, accuracy, None)
+            evaluations.append((candidate, score))
 
             os.chdir(old_cwd)
         sess.close()
+
+    sorted(evaluations, key=lambda candidate: candidate[1]).reverse()
+    starters = []
+    for candidate, _score in evaluations[0:3]:
+        starters += [candidate]
+
+    with open("fit", "a") as text_file:
+        text_file.write("%s Accuracy: %f\n" % (starters[0][0], starters[0][1]))
