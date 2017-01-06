@@ -5,6 +5,8 @@
 
 class NgonMesh : public Mesh {
 public:
+  GLenum render_style = GL_TRIANGLE_FAN;
+
   NgonMesh(int min, int max, range_t yaw, range_t pitch)
   {
     // NOOP
@@ -99,7 +101,7 @@ public:
     glPushMatrix();
     glMultMatrixf((const GLfloat*)transform);
 
-    glBegin(GL_TRIANGLE_FAN);
+    glBegin(render_style);
     for(int i = vertices.size(); i--;)
     {
       const range_t r = { 0.25, 1 };

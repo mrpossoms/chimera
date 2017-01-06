@@ -57,7 +57,7 @@ public:
 
     regular.parameter_ranges[0].min = regular.parameter_ranges[1].min = -1;
     regular.parameter_ranges[0].min = regular.parameter_ranges[1].max = 1;
-    regular.parameter_ranges[2].min = 1;
+    regular.parameter_ranges[2].min = 4;
     regular.parameter_ranges[2].max = 5;
 
     bg_poly.parameter_ranges[0].min = bg_poly.parameter_ranges[1].min = 0;
@@ -67,6 +67,8 @@ public:
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_MULTISAMPLE);
     glShadeModel(GL_SMOOTH);
+
+    glLineWidth(2);
 
     // Chimera scene setup
     glViewport(0, 0, SAMPLE_WIDTH + 2, SAMPLE_HEIGHT + 2);
@@ -175,7 +177,10 @@ public:
 
     tri_noise->permute();
     tri_noise->render();
- 
+
+    
+    tri.render_style = regular.render_style = random() % 4 ? GL_TRIANGLE_FAN : GL_LINE_LOOP;
+
     if(in_view)
     {
       tri.permute();
@@ -183,6 +188,8 @@ public:
     }
     else
     {
+      regular.parameter_ranges[0].min = -0.5;
+      regular.parameter_ranges[1].max = 0.5;
       regular.permute();
       regular.render();
     }
