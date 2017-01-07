@@ -23,7 +23,6 @@ const range_t ZERO = { 0, 0 };
 class TriangleScene : public Scene {
 public:
   TriangleScene() : tri(3, 3, PI_8, PI_8),
-                    regular(4, 12, PI_2, PI_2),
                     bg_poly(4, 4, ZERO, ZERO)
   {
 
@@ -55,13 +54,8 @@ public:
     glutCreateWindow("Chimera");
 #endif
 
-    regular.parameter_ranges[0].min = regular.parameter_ranges[1].min = -1;
-    regular.parameter_ranges[0].min = regular.parameter_ranges[1].max = 1;
-    regular.parameter_ranges[2].min = 4;
-    regular.parameter_ranges[2].max = 5;
-
     bg_poly.parameter_ranges[0].min = bg_poly.parameter_ranges[1].min = 0;
-    bg_poly.parameter_ranges[0].min = bg_poly.parameter_ranges[1].max = 0;
+    bg_poly.parameter_ranges[0].max = bg_poly.parameter_ranges[1].max = 0;
     bg_poly.parameter_ranges[2].min = bg_poly.parameter_ranges[2].max = 0.5;
 
     glEnable(GL_TEXTURE_2D);
@@ -121,20 +115,13 @@ public:
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    tri.permute();
-
     const range_t one = { -1, 1 };
     float contrast_split = (randomf(one) * 0.1) + 0.5;
     float min = contrast_split, max = 1;
 
     if(contrast_split < 0.5)
     {
-      min = 0.1, max = contrast_split;
-    }
-
-    for(int i = 3; i--;){
-      range_t range = { min, max };
-      ((range_t*)bg_noise->parameters)[i] = range;
+      min = 0, max = contrast_split - 0.1;
     }
 
     view->render();
@@ -145,6 +132,7 @@ public:
 
     tri_noise->permute();
     tri_noise->render();
+
     bg_poly.parameter_ranges[0].min = bg_poly.parameter_ranges[0].max = 0;
     bg_poly.parameter_ranges[1].min = bg_poly.parameter_ranges[1].max = 0;
     bg_poly.permute();
@@ -166,7 +154,7 @@ public:
     min = 0, max = contrast_split;
     if(contrast_split < 0.5)
     {
-      min = contrast_split, max = 1;
+      min = contrast_split + 0.1, max = 1;
     }
 
     for(int i = 3; i--;)
@@ -178,21 +166,21 @@ public:
     tri_noise->permute();
     tri_noise->render();
 
-    
-    tri.render_style = regular.render_style = random() % 4 ? GL_TRIANGLE_FAN : GL_LINE_LOOP;
+
+    tri.render_style = random() % 4 ? GL_TRIANGLE_FAN : GL_LINE_LOOP;
 
     if(in_view)
     {
-      tri.permute();
-      tri.render();
+        tri.parameter_ranges[3].min = tri.parameter_ranges[3].max = 3;
     }
     else
     {
-      regular.parameter_ranges[0].min = -0.5;
-      regular.parameter_ranges[1].max = 0.5;
-      regular.permute();
-      regular.render();
+        tri.parameter_ranges[3].min = 4;
+        tri.parameter_ranges[3].max = 12;
     }
+
+    tri.permute();
+    tri.render();
 
     glFinish();
 
@@ -274,7 +262,7 @@ private:
 #ifdef __APPLE__
   GLFWwindow* win;
 #endif
-  NgonMesh tri, regular;
+  NgonMesh tri;//, regular;
   NgonMesh bg_poly;
   UniformNoise *tri_noise, *bg_noise;
   Viewer* view;
