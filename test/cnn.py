@@ -72,6 +72,12 @@ class BlobTrainingSet():
         self.index = 0
         self.file.seek(0);
 
+    def size(self):
+        last_pos = self.file.tell()
+        self.file.seek(0, 2)
+        size = self.file.tell() // (4 + 112 ** 2)
+        self.file.seek(last_pos, 0)
+        return size
 
     def next_batch(self, size):
         images, labels = [], []
@@ -326,12 +332,13 @@ with tf.Session() as sess:
     test_wd = os.getcwd()
     os.chdir(old_cwd)
 
-    for i in range(20000):
-      batch = training_set.next_batch(50)
+    batch_size = 50
+    for i in range(training_set.size() // batch_size):
+      batch = training_set.next_batch(batch_size)
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: .5})
       os.write(1, bytearray('.', encoding='utf8'))
 
-      if i%500 == 0:
+      if i%100 == 0:
         acc = test(y_conv, y_, accuracy, h_pool4)
         train_accuracy = accuracy.eval(feed_dict={
             x:batch[0], y_: batch[1], keep_prob: 1.0})
