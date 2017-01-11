@@ -55,9 +55,9 @@ public:
     glutCreateWindow("Chimera");
 #endif
 
-    regular.parameter_ranges[0].min = regular.parameter_ranges[1].min = -1;
-    regular.parameter_ranges[0].min = regular.parameter_ranges[1].max = 1;
-    regular.parameter_ranges[2].min = 1;
+    regular.parameter_ranges[0].min = regular.parameter_ranges[1].min = 0;
+    regular.parameter_ranges[0].min = regular.parameter_ranges[1].max = 0;
+    regular.parameter_ranges[2].min = 2;
     regular.parameter_ranges[2].max = 5;
 
     bg_poly.parameter_ranges[0].min = bg_poly.parameter_ranges[1].min = 0;
@@ -67,6 +67,7 @@ public:
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_MULTISAMPLE);
     glShadeModel(GL_SMOOTH);
+    glLineWidth(3);
 
     // Chimera scene setup
     glViewport(0, 0, SAMPLE_WIDTH + 2, SAMPLE_HEIGHT + 2);
@@ -118,8 +119,6 @@ public:
     }
 
     glClear(GL_COLOR_BUFFER_BIT);
-
-    tri.permute();
 
     const range_t one = { -1, 1 };
     float contrast_split = (randomf(one) * 0.1) + 0.5;
@@ -175,7 +174,9 @@ public:
 
     tri_noise->permute();
     tri_noise->render();
- 
+
+    tri.render_style = regular.render_style = random() % 3 ? GL_TRIANGLE_FAN : GL_LINE_LOOP;
+
     if(in_view)
     {
       tri.permute();
@@ -192,6 +193,11 @@ public:
 #ifdef __APPLE__
     glfwPollEvents();
 #endif
+
+    if(VIS_OPTS.dwell)
+    {
+      sleep(VIS_OPTS.dwell);
+    }
   }
 
   int save(const char* path)
