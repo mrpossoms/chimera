@@ -17,13 +17,14 @@
 #define SAMPLE_HEIGHT 112
 
 const range_t PI_2 = { -M_PI / 4.f, M_PI / 4.f };
+const range_t PI_4 = { -M_PI / 8.f, M_PI / 8.f };
 const range_t PI_8 = { -M_PI / 16.f, M_PI / 16.f };
 const range_t ZERO = { 0, 0 };
 
 class TriangleScene : public Scene {
 public:
-  TriangleScene() : tri(3, 3, PI_8, PI_8),
-                    regular(4, 12, PI_2, PI_2),
+  TriangleScene() : tri(3, 3, PI_4, PI_4),
+                    regular(4, 12, PI_4, PI_4),
                     bg_poly(4, 4, ZERO, ZERO)
   {
 
@@ -55,8 +56,8 @@ public:
     glutCreateWindow("Chimera");
 #endif
 
-    regular.parameter_ranges[0].min = regular.parameter_ranges[1].min = 0;
-    regular.parameter_ranges[0].min = regular.parameter_ranges[1].max = 0;
+    // regular.parameter_ranges[0].min = regular.parameter_ranges[1].min = -1;
+    // regular.parameter_ranges[0].min = regular.parameter_ranges[1].max = 1;
     regular.parameter_ranges[2].min = 2;
     regular.parameter_ranges[2].max = 5;
 
@@ -135,6 +136,8 @@ public:
     }
 
     view->render();
+    const float w = -((2.f * 100.f * 0.1f) / (100.f - 0.1f));
+
     for(int i = 3; i--;){
       range_t range = { min, max };
       tri_noise->parameter_ranges[i] = range;
@@ -144,7 +147,7 @@ public:
     tri_noise->render();
     bg_poly.parameter_ranges[0].min = bg_poly.parameter_ranges[0].max = 0;
     bg_poly.parameter_ranges[1].min = bg_poly.parameter_ranges[1].max = 0;
-    bg_poly.permute();
+    bg_poly.permute(w);
     bg_poly.render();
 
 /*
@@ -179,12 +182,12 @@ public:
 
     if(in_view)
     {
-      tri.permute();
+      tri.permute(w);
       tri.render();
     }
     else
     {
-      regular.permute();
+      regular.permute(w);
       regular.render();
     }
 

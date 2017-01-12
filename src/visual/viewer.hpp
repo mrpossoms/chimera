@@ -18,7 +18,8 @@ public:
   bool in_view(Vec3& point);
   viewer_props_t view;
   int width, height;
-
+  mat4x4 projection;
+  
 protected:
   mat4x4 MVP;
 };

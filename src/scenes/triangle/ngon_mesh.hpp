@@ -29,7 +29,7 @@ public:
     return (const void*)vertices.data();
   }
 
-  void permute()
+  void permute(float w)
   {
     Percept::permute();
     float theta = randomf() * M_PI * 2;
@@ -53,11 +53,21 @@ public:
 
     // printf("%f - %f %f - %f\n", parameter_ranges[0].min, parameter_ranges[0].max, parameter_ranges[1].min, parameter_ranges[1].max);
 
-    bounding_sphere.origin = Vec3(
+     Vec3 p(
       randomf(parameter_ranges[0]),
       randomf(parameter_ranges[1]),
       randomf(parameter_ranges[2])
     );
+
+    float s = p.z;
+    mat4x4 inv_proj = {
+      { s, 0, 0, 0 },
+      { 0, s, 0, 0 },
+      { 0, 0, 1, 0 },
+      { 0, 0, 0, 1 },
+    };
+
+    mat4x4_mul_vec3(bounding_sphere.origin.v, inv_proj, p.v);
 
     mat4x4 temp;
     mat4x4_identity(transform);
