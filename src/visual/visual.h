@@ -11,6 +11,7 @@ struct chimera_visual_options {
   bool write_blob;
   bool is_rgb;
   int do_trunc;
+  int dwell;
   const char* blob_path;
 };
 

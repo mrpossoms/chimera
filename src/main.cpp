@@ -37,6 +37,12 @@ void opt_blob_path(const char* value, int present)
 	VIS_OPTS.blob_path = value;
 }
 
+void opt_dwell(const char* value, int present)
+{
+  if(!present) return;
+  VIS_OPTS.dwell = atoi(value);
+}
+
 void opt_daemon(const char* value, int present)
 {
   if(!present) return;
@@ -123,6 +129,12 @@ int main(int argc, const char* argv[])
     "Output location of blob",
     1,
     opt_blob_path
+  },
+  {
+    "--dwell",
+    "Pause in seconds between frames",
+    1,
+    opt_dwell
   }
   OPT_LIST_END("Chimera")
 

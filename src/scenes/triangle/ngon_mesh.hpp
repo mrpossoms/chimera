@@ -5,6 +5,8 @@
 
 class NgonMesh : public Mesh {
 public:
+  GLenum render_style = GL_TRIANGLE_FAN;
+
   NgonMesh(int min, int max, range_t yaw, range_t pitch)
   {
     // NOOP
@@ -59,13 +61,14 @@ public:
 
     mat4x4 temp;
     mat4x4_identity(transform);
-    mat4x4_rotate_Y(temp, transform, randomf(parameter_ranges[4]));
-    mat4x4_rotate_X(transform, temp, randomf(parameter_ranges[5]));
     mat4x4_translate_in_place(transform,
       bounding_sphere.origin.x,
       bounding_sphere.origin.y,
       bounding_sphere.origin.z
     );
+    mat4x4_rotate_Y(temp, transform, randomf(parameter_ranges[4]));
+    mat4x4_rotate_X(transform, temp, randomf(parameter_ranges[5]));
+
 
     generated = false;
   }
@@ -99,7 +102,7 @@ public:
     glPushMatrix();
     glMultMatrixf((const GLfloat*)transform);
 
-    glBegin(GL_TRIANGLE_FAN);
+    glBegin(render_style);
     for(int i = vertices.size(); i--;)
     {
       const range_t r = { 0.25, 1 };
