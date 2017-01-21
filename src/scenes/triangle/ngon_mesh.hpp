@@ -33,7 +33,7 @@ public:
   {
     Percept::permute();
     float theta = randomf() * M_PI * 2;
-    float texcoord_scale = powf(randomf(), 3);
+    float texcoord_scale = 1;//powf(randomf(), 2);
 
     vertices.clear();
     int verts = roundf(randomf(parameter_ranges[3]));

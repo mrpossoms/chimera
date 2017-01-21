@@ -23,8 +23,8 @@ const range_t ZERO = { 0, 0 };
 
 class TriangleScene : public Scene {
 public:
-  TriangleScene() : tri(3, 3, PI_4, PI_4),
-                    regular(4, 12, PI_4, PI_4),
+  TriangleScene() : tri(3, 3, PI_8, PI_8),
+                    regular(4, 12, PI_8, PI_8),
                     bg_poly(4, 4, ZERO, ZERO)
   {
 
@@ -56,13 +56,16 @@ public:
     glutCreateWindow("Chimera");
 #endif
 
-    // regular.parameter_ranges[0].min = regular.parameter_ranges[1].min = -1;
-    // regular.parameter_ranges[0].min = regular.parameter_ranges[1].max = 1;
+    tri.parameter_ranges[0].min = tri.parameter_ranges[1].min = -0.25;
+    tri.parameter_ranges[0].max = tri.parameter_ranges[1].max =  0.25;
+
+    regular.parameter_ranges[0].min = regular.parameter_ranges[1].min = -0.25;
+    regular.parameter_ranges[0].max = regular.parameter_ranges[1].max = 0.25;
     regular.parameter_ranges[2].min = 2;
     regular.parameter_ranges[2].max = 5;
 
     bg_poly.parameter_ranges[0].min = bg_poly.parameter_ranges[1].min = 0;
-    bg_poly.parameter_ranges[0].min = bg_poly.parameter_ranges[1].max = 0;
+    bg_poly.parameter_ranges[0].max = bg_poly.parameter_ranges[1].max = 0;
     bg_poly.parameter_ranges[2].min = bg_poly.parameter_ranges[2].max = 0.5;
 
     glEnable(GL_TEXTURE_2D);
@@ -78,7 +81,7 @@ public:
     range_t one = { 0, 1 };
     range_t low = { 0.4, 0.6 };
     tri_noise = new UniformNoise(64, 64, one, one, one);
-    bg_noise = new UniformNoise(64, 64, one, one, one);
+    bg_noise = new UniformNoise(128, 128, one, one, one);
 
     if(VIS_OPTS.write_blob)
     {
