@@ -9,7 +9,7 @@ void Percept::permute()
 {
   if(!parameters)
   {
-    parameters = (float*)calloc(parameter_ranges.size(), sizeof(float));
+    parameters = (float*)calloc(parameter_ranges.size(), sizeof(range_t));
   }
 
   for(int i = parameter_ranges.size(); i--;)
