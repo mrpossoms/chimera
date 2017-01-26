@@ -105,10 +105,10 @@ with tf.Session() as sess:
     h_fc3_drop = tf.nn.dropout(h_fc3, keep_prob)
 
 
-    W_fc4 = weight_variable([128, classes])
+    W_fc4 = weight_variable([hp4_width * hp4_height * s_conv4[3], classes])
     b_fc4 = bias_variable([classes])
 
-    y_conv = tf.matmul(h_fc3_drop, W_fc4) + b_fc4
+    y_conv = tf.matmul(h_pool4_flat, W_fc4) + b_fc4
 
     #cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y_conv, y_))
     #ylna+(1−y)ln(1−a)
