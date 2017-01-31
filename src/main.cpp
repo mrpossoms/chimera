@@ -5,9 +5,18 @@
 static struct {
   unsigned int width = 640, height = 480;
   unsigned int iterations = 50000;
+  int silent;
 } PROPS;
 
 chimera_visual_options VIS_OPTS;
+
+void opt_is_silent(const char* value, int present)
+{
+	if(present)
+	{
+		for(int i = 3; i--;) close(i);
+	}
+}
 
 void opt_to_file(const char* value, int present)
 {
@@ -135,6 +144,12 @@ int main(int argc, const char* argv[])
     "Pause in seconds between frames",
     1,
     opt_dwell
+  },
+  {
+    "--silent",
+    "Close stdout and stderr",
+    0,
+    opt_is_silent
   }
   OPT_LIST_END("Chimera")
 

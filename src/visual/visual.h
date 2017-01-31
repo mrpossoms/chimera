@@ -86,7 +86,7 @@ static void write_png_file_rgb(
 
   png_init_io(png, fp);
 
-  // Output is 8bit depth, RGBA format.
+  // Output is 8bit depth, RGB format.
   png_set_IHDR(
     png,
     info,

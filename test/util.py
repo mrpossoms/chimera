@@ -8,10 +8,11 @@ import os
 
 
 class FileTrainingSet():
-    def __init__(self, base_path):
+    def __init__(self, base_path, shape=[112,112]):
         self.sample_paths = os.listdir(base_path)
         self.index = 0
         self.cache = {}
+        self.shape = shape
 
         # remove hidden files
         for file in self.sample_paths:
@@ -22,6 +23,9 @@ class FileTrainingSet():
 
     def reset(self):
         self.index = 0
+
+    def size(self):
+        return len(self.sample_paths)
 
     def next_batch(self, size, decoder=tf.image.decode_png):
         images, labels = [], []
@@ -38,8 +42,11 @@ class FileTrainingSet():
                image = self.cache[path] 
             else:
                file_content = tf.read_file(path)
-               image = tf.image.rgb_to_grayscale(decoder(file_content)) #tf.to_float(decoder(file_content)) / 255.  # use png or jpg decoder based on your files.
-               image = tf.image.resize_images([image], [112, 112]).eval().flatten() / 255.0
+               image = decoder(file_content)
+               if len(self.shape) <= 2:
+                   image = tf.image.rgb_to_grayscale(image) #tf.to_float(decoder(file_content)) / 255.  # use png or jpg decoder based on your files.
+               print(image)
+               image = tf.image.resize_images([image], self.shape[:2]).eval().flatten() / 255.0
                self.cache[path] = image
 
             images += [image]
@@ -53,9 +60,10 @@ class FileTrainingSet():
 
 
 class BlobTrainingSet():
-    def __init__(self, path):
+    def __init__(self, path, shape=[112, 112]):
         self.index = 0
         self.file = open(path, mode='rb')
+        self.shape = shape
 
     def reset(self):
         self.index = 0
@@ -64,7 +72,7 @@ class BlobTrainingSet():
     def size(self):
         last_pos = self.file.tell()
         self.file.seek(0, 2)
-        size = self.file.tell() // (4 + 112 ** 2)
+        size = self.file.tell() // (4 + np.prod(self.shape))
         self.file.seek(last_pos, 0)
         return size
 
@@ -76,12 +84,12 @@ class BlobTrainingSet():
         # threads = tf.train.start_queue_runners(coord=coord)
 
         for _ in range(size):
-            buf = self.file.read(112**2)
+            buf = self.file.read(np.prod(self.shape))
             tag = struct.unpack('I', self.file.read(4))[0]
 
             assert tag is 0 or tag is 1
 
-            images += [ np.frombuffer(buf, dtype=np.uint8).reshape(112**2) / 255.0 ]
+            images += [ np.frombuffer(buf, dtype=np.uint8).reshape(np.prod(self.shape)) / 255.0 ]
             # Image.frombytes('L', (128, 128), buf).show()
             if tag == 1:
                 labels += [1.0]
@@ -93,7 +101,6 @@ class BlobTrainingSet():
         # coord.join(threads)
 
         batch = np.asarray(images), np.asarray(labels).reshape([len(labels), 1])
-        print("%d, %d" % (len(batch[0]), len(batch[1])))
         return batch
         #return np.asarray(images), np.asarray(labels)
 

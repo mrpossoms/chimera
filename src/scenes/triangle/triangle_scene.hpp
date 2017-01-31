@@ -56,11 +56,11 @@ public:
     glutCreateWindow("Chimera");
 #endif
 
-    tri.parameter_ranges[0].min = tri.parameter_ranges[1].min = -0.25;
-    tri.parameter_ranges[0].max = tri.parameter_ranges[1].max =  0.25;
+    tri.parameter_ranges[0].min = tri.parameter_ranges[1].min = -0.5;
+    tri.parameter_ranges[0].max = tri.parameter_ranges[1].max =  0.5;
 
-    regular.parameter_ranges[0].min = regular.parameter_ranges[1].min = -0.25;
-    regular.parameter_ranges[0].max = regular.parameter_ranges[1].max = 0.25;
+    regular.parameter_ranges[0].min = regular.parameter_ranges[1].min = -0.5;
+    regular.parameter_ranges[0].max = regular.parameter_ranges[1].max = 0.5;
     regular.parameter_ranges[2].min = 2;
     regular.parameter_ranges[2].max = 5;
 
@@ -124,6 +124,7 @@ public:
 
     glClear(GL_COLOR_BUFFER_BIT);
 
+/*
     const range_t one = { -1, 1 };
     float contrast_split = (randomf(one) * 0.1) + 0.5;
     float min = contrast_split, max = 1;
@@ -137,14 +138,17 @@ public:
       range_t range = { min, max };
       ((range_t*)bg_noise->parameters)[i] = range;
     }
+*/
 
     view->render();
     const float w = -((2.f * 100.f * 0.1f) / (100.f - 0.1f));
 
+/*
     for(int i = 3; i--;){
       range_t range = { min, max };
       tri_noise->parameter_ranges[i] = range;
     }
+*/
 
     tri_noise->permute();
     tri_noise->render();
@@ -166,6 +170,7 @@ public:
     }
 */
 
+/*
     min = 0, max = contrast_split;
     if(contrast_split < 0.5)
     {
@@ -177,23 +182,34 @@ public:
       range_t range = { min, max };
       tri_noise->parameter_ranges[i] = range;
     }
+*/
 
     tri_noise->permute();
     tri_noise->render();
 
-    tri.render_style = regular.render_style = random() % 3 ? GL_TRIANGLE_FAN : GL_LINE_LOOP;
+    //tri.render_style = regular.render_style = random() % 3 ? GL_TRIANGLE_FAN : GL_LINE_LOOP;
 
-    if(in_view)
-    {
-      tri.permute(w);
-      tri.render();
-    }
-    else
     {
       regular.permute(w);
       regular.render();
     }
 
+    tri_noise->permute();
+    tri_noise->render();
+
+    if(in_view)
+    {
+      tri.render_style = regular.render_style = random() % 3 ? GL_TRIANGLE_FAN : GL_LINE_LOOP;
+      tri.permute(w);
+      tri.render();
+    }
+/*
+    else
+    {
+      regular.permute(w);
+      regular.render();
+    }
+*/
     glFinish();
 
 #ifdef __APPLE__

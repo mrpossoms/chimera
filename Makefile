@@ -1,7 +1,7 @@
 OUT=chimera
 
 CXXC=g++
-CXX_FLAGS=-g -ggdb -std=c++11
+CXX_FLAGS=-g -ggdb -std=c++11 -Wno-deprecated-declarations
 
 EXT=./external
 

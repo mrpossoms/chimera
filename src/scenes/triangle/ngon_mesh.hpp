@@ -32,7 +32,8 @@ public:
   void permute(float w)
   {
     Percept::permute();
-    float theta = randomf() * M_PI * 2;
+    const float torque = M_PI / 2;
+    float theta = (randomf() - 0.5f) * torque - M_PI / 2;
     float texcoord_scale = 1;//powf(randomf(), 2);
 
     vertices.clear();
