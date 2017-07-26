@@ -29,7 +29,7 @@ public:
     return (const void*)vertices.data();
   }
 
-  void permute(float w)
+  void permute()
   {
     Percept::permute();
     const float torque = M_PI / 2;

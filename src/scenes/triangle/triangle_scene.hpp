@@ -154,10 +154,9 @@ public:
     tri_noise->render();
     bg_poly.parameter_ranges[0].min = bg_poly.parameter_ranges[0].max = 0;
     bg_poly.parameter_ranges[1].min = bg_poly.parameter_ranges[1].max = 0;
-    bg_poly.permute(w);
+    bg_poly.permute();
     bg_poly.render();
 
-/*
     for(int i = 6 + random() % 4; i--;)
     {
       tri_noise->permute();
@@ -168,7 +167,6 @@ public:
       regular.permute();
       regular.render();
     }
-*/
 
 /*
     min = 0, max = contrast_split;
@@ -190,7 +188,7 @@ public:
     //tri.render_style = regular.render_style = random() % 3 ? GL_TRIANGLE_FAN : GL_LINE_LOOP;
 
     {
-      regular.permute(w);
+      regular.permute();
       regular.render();
     }
 
@@ -199,8 +197,8 @@ public:
 
     if(in_view)
     {
-      tri.render_style = regular.render_style = random() % 3 ? GL_TRIANGLE_FAN : GL_LINE_LOOP;
-      tri.permute(w);
+      //tri.render_style = regular.render_style = random() % 3 ? GL_TRIANGLE_FAN : GL_LINE_LOOP;
+      tri.permute();
       tri.render();
     }
 /*
